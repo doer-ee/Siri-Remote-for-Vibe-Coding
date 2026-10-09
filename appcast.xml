@@ -3,7 +3,7 @@
      xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
     <channel>
         <title>HyperVibe Updates</title>
-        <link>https://github.com/HOLODATA-COM/SiriRemoteForge</link>
+        <link>https://github.com/doer-ee/SiriRemoteForge</link>
         <description>Authenticated HyperVibe software updates</description>
         <language>en</language>
 
@@ -13,7 +13,7 @@
         <!-- hypervibe:beta:start -->
     <item>
         <title>HyperVibe 0.2.0-beta.8</title>
-        <link>https://github.com/HOLODATA-COM/SiriRemoteForge/releases/tag/v0.2.0-beta.8</link>
+        <link>https://github.com/doer-ee/SiriRemoteForge/releases/tag/v0.2.0-beta.8</link>
         <pubDate>Wed, 02 Sep 2026 00:48:40 +1000</pubDate>
         <sparkle:version>2002008</sparkle:version>
         <sparkle:shortVersionString>0.2.0-beta.8</sparkle:shortVersionString>
@@ -117,7 +117,7 @@ Bluetooth voice path; please include the macOS version, remote model and firmwar
 reproducible issue.
 
         ]]></description>
-        <enclosure url="https://github.com/HOLODATA-COM/SiriRemoteForge/releases/download/v0.2.0-beta.8/HyperVibe-0.2.0-beta.8-macOS-arm64.zip"
+        <enclosure url="https://github.com/doer-ee/SiriRemoteForge/releases/download/v0.2.0-beta.8/HyperVibe-0.2.0-beta.8-macOS-arm64.zip"
                    length="4291681"
                    type="application/octet-stream"
                    sparkle:edSignature="OLVGbztVpRw7By8GhILe/pHCg34TzGBeMo39eV3MGVu3MSGAw3Kb8Xt0lLl4m9fi+IJo+Pn3Ot2KqOXjNtzhCQ==" />
@@ -125,7 +125,3 @@ reproducible issue.
         <!-- hypervibe:beta:end -->
     </channel>
 </rss>
-<!-- sparkle-signatures:
-edSignature: ed91YB2mJLLL8C+7JVtfA4hSwMfgsTCfemZZrUzrKzjHTrw220sw+srhfwkjQx6RKe52cNAa7vsICjFChzv2AQ==
-length: 7485
--->

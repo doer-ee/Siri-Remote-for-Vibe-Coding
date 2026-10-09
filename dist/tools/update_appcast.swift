@@ -45,8 +45,8 @@ do {
     // Split the only sequence forbidden inside CDATA without altering rendered Markdown.
     let safeNotes = notes.replacingOccurrences(of: "]]>", with: "]]]]><![CDATA[>")
     let encodedVersion = xmlEscape(version)
-    let packageURL = "https://github.com/HOLODATA-COM/SiriRemoteForge/releases/download/v\(encodedVersion)/\(xmlEscape(packageName))"
-    let releaseURL = "https://github.com/HOLODATA-COM/SiriRemoteForge/releases/tag/v\(encodedVersion)"
+    let packageURL = "https://github.com/doer-ee/SiriRemoteForge/releases/download/v\(encodedVersion)/\(xmlEscape(packageName))"
+    let releaseURL = "https://github.com/doer-ee/SiriRemoteForge/releases/tag/v\(encodedVersion)"
     let channelElement = channel == "stable"
         ? ""
         : "\n            <sparkle:channel>\(xmlEscape(channel))</sparkle:channel>"

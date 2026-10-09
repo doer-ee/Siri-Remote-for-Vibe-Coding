@@ -143,7 +143,7 @@ enum SystemReadiness {
     }
 
     static func openReleaseDownloads() {
-        guard let url = URL(string: "https://github.com/HOLODATA-COM/SiriRemoteForge/releases")
+        guard let url = URL(string: "https://github.com/doer-ee/SiriRemoteForge/releases")
         else { return }
         NSWorkspace.shared.open(url)
     }
