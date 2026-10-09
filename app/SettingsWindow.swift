@@ -1,6 +1,6 @@
 //
 //  SettingsWindow.swift
-//  HyperVibe (settings UI)
+//  Siri Remote Vibe (settings UI)
 //
 //  Hosts the SwiftUI SettingsView in a clean, borderless-title window from the menu-bar app.
 //
@@ -26,7 +26,7 @@ final class SettingsWindowController {
             // two-column Mac layout; Layout gets a little more room for its binding matrix.
             hosting.sizingOptions = [.preferredContentSize]
             let win = NSWindow(contentViewController: hosting)
-            win.title = "siriRemote Settings"
+            win.title = AppBrand.name + " Settings"
             win.styleMask = [.titled, .closable, .resizable, .fullSizeContentView]
             win.titlebarAppearsTransparent = true
             win.titleVisibility = .hidden

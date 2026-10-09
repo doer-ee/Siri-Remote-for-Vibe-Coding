@@ -1,6 +1,6 @@
 //
 //  WindowControl.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Window-state changes on the frontmost window: full screen, minimise.
 //

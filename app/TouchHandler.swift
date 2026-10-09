@@ -1,6 +1,6 @@
 //
 //  TouchHandler.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Handles Siri Remote trackpad input using Apple's private MultitouchSupport.framework
 //
@@ -78,6 +78,7 @@ class TouchHandler {
     /// When false, the entire touch surface is ignored (movement, scrolling, swipes and taps).
     /// The HID device stays attached so buttons and the Siri microphone continue to work.
     private var touchInputEnabled = true
+    private var nativeTouchBehaviorEnabled = true
     private var devices: [UInt64: MTDevice] = [:]
     private var activeTouchDevice = ActiveTouchDeviceTracker<UInt64>()
     private let touchStateLock = NSLock()
@@ -217,6 +218,14 @@ class TouchHandler {
 
     init(cursorController: CursorController) {
         self.cursorController = cursorController
+    }
+
+    /// Keep explicitly mapped swipe/tap gestures usable without native movement, scroll or clicks.
+    func setNativeTouchBehaviorEnabled(_ enabled: Bool) {
+        touchStateLock.lock()
+        if nativeTouchBehaviorEnabled != enabled { resetTouchSessionWithoutAction() }
+        nativeTouchBehaviorEnabled = enabled
+        touchStateLock.unlock()
     }
 
     /// Toggle surface handling without disconnecting the underlying multitouch device.
@@ -782,7 +791,7 @@ class TouchHandler {
             return
         }
 
-        if duration < tapMaxDuration && movement < tapMaxDistance {
+        if nativeTouchBehaviorEnabled && duration < tapMaxDuration && movement < tapMaxDistance {
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 self.cursorController.performClick()
@@ -798,6 +807,7 @@ class TouchHandler {
     }
 
     private func moveCursor(deltaX: CGFloat, deltaY: CGFloat) {
+        guard nativeTouchBehaviorEnabled else { return }
         // Velocity-based acceleration: slow finger motion → precise (accelMin), fast → reach
         // (accelMax), smooth between. v is the per-frame delta magnitude (same normalized units
         // as the deadzone). This is the ONLY place the delta is scaled (CursorController no longer
@@ -819,6 +829,7 @@ class TouchHandler {
     /// Shake detector: count horizontal sign reversals of brisk motion; fire `onShake` when
     /// `shakeReversals` land within `shakeWindow`. `now` is the MT frame timestamp (seconds).
     private func detectShake(dx: CGFloat, timestamp now: Double) {
+        guard nativeTouchBehaviorEnabled else { return }
         guard onShake != nil else { return }
         // Only frames with brisk horizontal motion participate; slow drift neither counts nor
         // resets the tracked sign.
@@ -855,6 +866,7 @@ class TouchHandler {
     /// Emit smooth circular scroll: carry the sub-pixel remainder so a steady rotation scrolls
     /// evenly instead of stepping between whole pixels.
     private func emitCircularScroll(pixels: Double) {
+        guard nativeTouchBehaviorEnabled else { return }
         let axis = activeCircularScrollAxis ?? circularScrollAxis
         let outputScale = axis == .horizontal ? layer1HorizontalSpeedScale : 1.0
         scrollRemainder += pixels * outputScale
@@ -894,6 +906,7 @@ class TouchHandler {
     }
 
     private func performScroll(deltaX: CGFloat, deltaY: CGFloat) {
+        guard nativeTouchBehaviorEnabled else { return }
         let scrollX = Int32(-deltaX * scrollScale)
         let scrollY = Int32(deltaY * scrollScale)
         

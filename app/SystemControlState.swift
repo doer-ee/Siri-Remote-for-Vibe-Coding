@@ -1,6 +1,6 @@
 //
 //  SystemControlState.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Read-only state for controls whose icon should describe the system after an action, not the
 //  direction of the button that was pressed. Volume uses CoreAudio's current default output

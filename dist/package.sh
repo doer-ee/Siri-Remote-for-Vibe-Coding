@@ -12,7 +12,7 @@ cd "$(dirname "$0")/.."
 ROOT="$PWD"
 DIST="$ROOT/dist"
 BUILD_ROOT="$DIST/build"
-APP_SOURCE="${HYPERVIBE_APP_PATH:-$ROOT/app/HyperVibe.app}"
+APP_SOURCE="${HYPERVIBE_APP_PATH:-$ROOT/app/Siri Remote for Vibe Coding.app}"
 MODE="public"
 VERSION="${HYPERVIBE_RELEASE_VERSION:-dev}"
 BUILD_NUMBER="${HYPERVIBE_BUILD_NUMBER:-}"
@@ -99,7 +99,7 @@ need "$ROOT/mic/router/srm_router"
 need "$ROOT/mic/captured/srm_captured"
 need "$ROOT/mic/captured/au.holodata.SiriRemoteMic.captured.plist"
 
-ARCHS="$(/usr/bin/lipo -archs "$APP_SOURCE/Contents/MacOS/HyperVibe")"
+ARCHS="$(/usr/bin/lipo -archs "$APP_SOURCE/Contents/MacOS/SiriRemoteVibe")"
 case "$ARCHS" in
     arm64) ASSET_ARCH="arm64" ;;
     x86_64) ASSET_ARCH="x86_64" ;;
@@ -112,24 +112,24 @@ esac
 
 OUT="$BUILD_ROOT/$VERSION"
 PAYLOAD="$OUT/payload"
-SETUP_APP="$OUT/HyperVibe Setup.app"
-UNINSTALL_APP="$OUT/HyperVibe Uninstall.app"
-APP_ZIP="$OUT/HyperVibe-$VERSION-macOS-$ASSET_ARCH.zip"
-FULL_ZIP="$OUT/HyperVibe-Full-Setup-$VERSION-$ASSET_ARCH.zip"
-NATIVE_PKG="$OUT/HyperVibe-Full-Setup-$VERSION-$ASSET_ARCH.pkg"
+SETUP_APP="$OUT/Siri Remote Vibe Setup.app"
+UNINSTALL_APP="$OUT/Siri Remote Vibe Uninstall.app"
+APP_ZIP="$OUT/SiriRemoteVibe-$VERSION-macOS-$ASSET_ARCH.zip"
+FULL_ZIP="$OUT/SiriRemoteVibe-Full-Setup-$VERSION-$ASSET_ARCH.zip"
+NATIVE_PKG="$OUT/SiriRemoteVibe-Full-Setup-$VERSION-$ASSET_ARCH.pkg"
 PKG_WORK="$BUILD_ROOT/staging/pkg/$VERSION"
 PKG_ROOT="$PKG_WORK/root"
 PKG_SCRIPTS="$PKG_WORK/scripts"
 PKG_RESOURCES="$PKG_WORK/resources"
-PKG_COMPONENT="$PKG_WORK/HyperVibePayload.pkg"
+PKG_COMPONENT="$PKG_WORK/SiriRemoteVibePayload.pkg"
 PKG_DISTRIBUTION="$PKG_WORK/Distribution.xml"
-PKG_UNSIGNED="$PKG_WORK/HyperVibe-unsigned.pkg"
+PKG_UNSIGNED="$PKG_WORK/SiriRemoteVibe-unsigned.pkg"
 
 /bin/rm -rf "$OUT" "$PKG_WORK"
 /bin/mkdir -p "$PAYLOAD/Legal"
 
 echo "→ assembling $MODE payload ($VERSION, $ASSET_ARCH)"
-/bin/cp -R "$APP_SOURCE" "$PAYLOAD/HyperVibe.app"
+/bin/cp -R "$APP_SOURCE" "$PAYLOAD/Siri Remote for Vibe Coding.app"
 /bin/cp -R "$ROOT/mic/driver/SiriRemoteMic.driver" "$PAYLOAD/"
 /bin/cp "$ROOT/mic/router/srm_router" "$PAYLOAD/"
 /bin/cp "$ROOT/mic/captured/srm_captured" "$PAYLOAD/"
@@ -173,7 +173,7 @@ fi
 
 COMMIT="${HYPERVIBE_SOURCE_COMMIT:-$(git rev-parse HEAD)}"
 /usr/bin/printf '%s\n' \
-    "HyperVibe release: $VERSION" \
+    "SiriRemoteVibe release: $VERSION" \
     "Source commit: $COMMIT" \
     "Architecture: $ARCHS" \
     "Package mode: $MODE" \
@@ -184,9 +184,9 @@ COMMIT="${HYPERVIBE_SOURCE_COMMIT:-$(git rev-parse HEAD)}"
 echo "→ building uninstaller"
 /usr/bin/osacompile -l AppleScript -o "$UNINSTALL_APP" "$DIST/uninstaller.applescript"
 /bin/cp "$DIST/do_uninstall.sh" "$UNINSTALL_APP/Contents/Resources/do_uninstall.sh"
-/usr/libexec/PlistBuddy -c "Set :CFBundleName HyperVibe Uninstall" \
+/usr/libexec/PlistBuddy -c "Set :CFBundleName Siri Remote Vibe Uninstall" \
     "$UNINSTALL_APP/Contents/Info.plist" 2>/dev/null \
-    || /usr/libexec/PlistBuddy -c "Add :CFBundleName string HyperVibe Uninstall" \
+    || /usr/libexec/PlistBuddy -c "Add :CFBundleName string Siri Remote Vibe Uninstall" \
         "$UNINSTALL_APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.hypervibe.uninstall" \
     "$UNINSTALL_APP/Contents/Info.plist" 2>/dev/null \
@@ -201,7 +201,7 @@ echo "→ building uninstaller"
     || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $BUILD_NUMBER" \
         "$UNINSTALL_APP/Contents/Info.plist"
 /usr/bin/codesign --force --sign - "$UNINSTALL_APP"
-/bin/cp -R "$UNINSTALL_APP" "$PAYLOAD/HyperVibe Uninstall.app"
+/bin/cp -R "$UNINSTALL_APP" "$PAYLOAD/Siri Remote Vibe Uninstall.app"
 
 echo "→ sealing payload manifest"
 (
@@ -214,9 +214,9 @@ echo "→ sealing payload manifest"
 echo "→ building setup app"
 /usr/bin/osacompile -l AppleScript -o "$SETUP_APP" "$DIST/installer.applescript"
 /bin/cp -R "$PAYLOAD" "$SETUP_APP/Contents/Resources/payload"
-/usr/libexec/PlistBuddy -c "Set :CFBundleName HyperVibe Setup" \
+/usr/libexec/PlistBuddy -c "Set :CFBundleName Siri Remote Vibe Setup" \
     "$SETUP_APP/Contents/Info.plist" 2>/dev/null \
-    || /usr/libexec/PlistBuddy -c "Add :CFBundleName string HyperVibe Setup" \
+    || /usr/libexec/PlistBuddy -c "Add :CFBundleName string Siri Remote Vibe Setup" \
         "$SETUP_APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.hypervibe.setup" \
     "$SETUP_APP/Contents/Info.plist" 2>/dev/null \
@@ -233,9 +233,9 @@ echo "→ building setup app"
 /usr/bin/codesign --force --sign - "$SETUP_APP"
 
 echo "→ building native macOS Installer package"
-/bin/mkdir -p "$PKG_ROOT/Library/Application Support/HyperVibe Installer" \
+/bin/mkdir -p "$PKG_ROOT/Library/Application Support/Siri Remote Vibe Installer" \
     "$PKG_SCRIPTS" "$PKG_RESOURCES"
-/bin/cp -R "$PAYLOAD" "$PKG_ROOT/Library/Application Support/HyperVibe Installer/payload"
+/bin/cp -R "$PAYLOAD" "$PKG_ROOT/Library/Application Support/Siri Remote Vibe Installer/payload"
 /bin/cp "$DIST/pkg/postinstall" "$PKG_SCRIPTS/postinstall"
 /bin/chmod 755 "$PKG_SCRIPTS/postinstall"
 /bin/cp "$DIST/pkg/resources/welcome.html" "$PKG_RESOURCES/welcome.html"

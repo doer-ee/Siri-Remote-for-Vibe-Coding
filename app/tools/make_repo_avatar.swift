@@ -77,11 +77,11 @@ func makeSocialPreview(_ w: CGFloat, _ h: CGFloat) -> NSImage {
     drawRemoteGlyph(ctx, canvasH: h, targetH: glyphH, center: NSPoint(x: glyphCX, y: h/2))
 
     let textX = w * 0.40
-    let title = NSAttributedString(string: "SiriRemoteForge", attributes: [
-        .font: NSFont.systemFont(ofSize: h*0.135, weight: .bold),
+    let title = NSAttributedString(string: "Siri Remote\nfor Vibe Coding", attributes: [
+        .font: NSFont.systemFont(ofSize: h*0.10, weight: .bold),
         .foregroundColor: NSColor.white,
     ])
-    let tagline = NSAttributedString(string: "Turn an Apple TV Siri Remote\ninto a Mac controller + virtual mic", attributes: [
+    let tagline = NSAttributedString(string: "Turn an Apple TV Siri Remote\ninto a controller for AI coding", attributes: [
         .font: NSFont.systemFont(ofSize: h*0.052, weight: .medium),
         .foregroundColor: NSColor(white: 1, alpha: 0.72),
     ])

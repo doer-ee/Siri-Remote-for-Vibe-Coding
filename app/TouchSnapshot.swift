@@ -1,6 +1,6 @@
 //
 //  TouchSnapshot.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  A plain copy of one MTTouch, taken on the multitouch callback thread so the C struct never
 //  escapes it. Carries every field the framework populates, including the ones the gesture code

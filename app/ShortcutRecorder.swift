@@ -1,6 +1,6 @@
 //
 //  ShortcutRecorder.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Native macOS shortcut capture for the Layout editor. The recorder consumes keyDown and
 //  flagsChanged while it owns first responder, then emits the same canonical tokens KeyMap executes.

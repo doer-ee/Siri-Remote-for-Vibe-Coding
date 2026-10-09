@@ -33,7 +33,7 @@ public final class Controller {
     /// active app mode's `inherits` chain — so the same layer can do different things in different
     /// apps (e.g. `L1.ring.left` = switch tab in a terminal mode, something else in a browser mode).
     /// It then falls back to the standalone layer mode `<layer>` for app-agnostic layer bindings,
-    /// and finally to the key's UNLAYERED binding in the current app — see `site`.
+    /// and, for legacy overlay layers, to the unlayered binding in the current app.
     private var activeLayer: String? {
         didSet {
             guard activeLayer != oldValue else { return }
@@ -87,94 +87,15 @@ public final class Controller {
         return id == "BASE" ? .base : .layer(id)
     }
 
-    /// A resolved binding together with the presentation of that SAME binding. Kept as one value so
-    /// the label and icon can never come from a different binding that merely shares the key.
-    private struct Site {
-        let action: Action
-        let presentation: Config.Presentation?
-        /// Per-binding override for when this hold stage fires; nil means use the global threshold.
-        let holdDelay: Double?
+    private func site(_ key: String) -> MappingEngine.ResolvedBinding? {
+        engine.resolveBinding(key, layer: activeLayer)
     }
 
-    /// Resolve `key`, most specific first:
-    ///
-    ///   1. `"<layer>.<key>"` in the active app mode's chain — this app, in this layer.
-    ///   2. `key` among the layer mode's OWN bindings — any app, in this layer.
-    ///   3. `key` in the active app mode's chain — this app, WITHOUT the layer, UNLESS the layer
-    ///      has claimed the button (see `layerClaims`).
-    ///
-    /// Step 3 is the point: a layer is a modifier, not a separate keyboard. A key the layer says
-    /// nothing about keeps doing whatever it does unlayered, IN THE CURRENT APP — holding the layer
-    /// must never turn a bound key into a dead one. Before this existed, holding L1 in a terminal
-    /// left the Back button dead, because `global` binds nothing there and the terminal's own
-    /// `repeatKey` was never consulted.
-    ///
-    /// The claim rule on step 3 exists because a button is ONE thing, not four. Its variants live
-    /// under separate keys — `button.playPause`, `.hold`, `.hold2`, `.double` — so a per-key
-    /// fallback let the unlayered variants leak in underneath a layer that had rebound the button:
-    /// binding `L1.button.playPause` to Copy and its `.hold` to Cut still left the base `.hold2`
-    /// opening Music at 1.0s. Nothing in the layer's own bindings would explain that. A layer now
-    /// either takes a button over or leaves it alone; the alternative — writing explicit
-    /// do-nothing bindings for every variant — is the boilerplate resolution rules exist to avoid.
-    ///
-    /// Step 2 deliberately does NOT walk the layer mode's inherits chain. Layer modes are declared
-    /// as `"L1": { "inherits": "global" }`, so walking it would answer with GLOBAL's base binding
-    /// and shadow step 3's app-specific one — the exact bug described above.
-    ///
-    /// There is no fourth step for "any app, without the layer". Steps 1 and 3 walk the app mode's
-    /// `inherits` chain, which is what reaches `global` — so a key bound only in global's base
-    /// still resolves under a layer in a terminal. Keeping that in `inherits` rather than hard-wiring
-    /// a global fallback is what lets a mode opt out: a mode with no `inherits` is standalone and
-    /// genuinely sees nothing else, layered or not.
-    private func site(_ key: String) -> Site? {
-        guard let layer = activeLayer else {
-            guard let action = engine.resolve(key) else { return nil }
-            return Site(action: action, presentation: engine.resolvePresentation(key),
-                        holdDelay: engine.resolveHoldDelay(key))
-        }
-        let namespaced = "\(layer).\(key)"
-        if let action = engine.resolve(namespaced) {
-            return Site(action: action, presentation: engine.resolvePresentation(namespaced),
-                        holdDelay: engine.resolveHoldDelay(namespaced))
-        }
-        if let action = engine.resolveOwn(key, in: layer) {
-            return Site(action: action, presentation: engine.resolveOwnPresentation(key, in: layer),
-                        holdDelay: engine.resolveOwnHoldDelay(key, in: layer))
-        }
-        // The layer owns this button but says nothing about THIS variant — a deliberate silence,
-        // not a gap to be filled from underneath.
-        if layerClaims(key, in: layer) { return nil }
-        guard let action = engine.resolve(key) else { return nil }
-        return Site(action: action, presentation: engine.resolvePresentation(key),
-                    holdDelay: engine.resolveHoldDelay(key))
-    }
-
-    /// The variants one physical button can carry. Resolution treats them as one family.
-    /// `.taphold*` is a SECOND hold menu reached by tap-then-press-and-hold (see RemoteInputHandler),
-    /// parallel to the plain-hold `.hold*` ladder. `.tap` is the quick single-tap of a PUSH-TO-TALK
-    /// button — whose base key is already the hold (dictation) binding, so its short-press action has
-    /// nowhere to live but an explicit suffix (see RemoteInputHandler's push-to-talk quick-tap branch).
-    /// Longer suffixes must precede their prefixes so `baseKey` strips `.taphold2` before `.taphold`,
-    /// and `.taphold` before `.hold` would mis-strip — `.taphold*` are listed ahead of the `.hold*`
-    /// group for that reason. (`.tap` shares no such end-overlap, so its position is free.)
-    private static let variantSuffixes = [".taphold3", ".taphold2", ".taphold",
-                                          ".hold3", ".hold2", ".hold", ".double", ".triple", ".tap"]
-
-    /// `button.playPause.hold2` → `button.playPause`.
-    private static func baseKey(_ key: String) -> String {
-        for suffix in variantSuffixes where key.hasSuffix(suffix) {
-            return String(key.dropLast(suffix.count))
-        }
-        return key
-    }
-
-    /// Has this layer bound ANY variant of this button, per-app or app-agnostically?
-    private func layerClaims(_ key: String, in layer: String) -> Bool {
-        let base = Controller.baseKey(key)
-        let family = [base] + Controller.variantSuffixes.map { base + $0 }
-        return family.contains { variant in
-            engine.resolve("\(layer).\(variant)") != nil || engine.resolveOwn(variant, in: layer) != nil
-        }
+    /// Native fallbacks (click, media keys, touch and built-in Voice) are also disabled in an
+    /// independent layer. Explicit bindings still dispatch normally; release cleanup stays active.
+    public func suppressesNativeBehavior(for key: String) -> Bool {
+        guard let layer = activeLayer, !engine.layerInheritsBaseBindings(layer) else { return false }
+        return site(key) == nil
     }
 
     private func resolve(_ key: String) -> Action? { site(key)?.action }

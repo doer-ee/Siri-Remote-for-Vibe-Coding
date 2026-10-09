@@ -1,6 +1,6 @@
 //
 //  ThinkingOrbEngine.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Native Swift port of thinking-orbs' portable geometry engine.
 //  Upstream: https://github.com/JakubAntalik/thinking-orbs

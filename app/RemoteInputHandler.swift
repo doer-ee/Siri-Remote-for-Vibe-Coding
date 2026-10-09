@@ -1,6 +1,6 @@
 //
 //  RemoteInputHandler.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Processes HID input events from Siri Remote
 //
@@ -857,7 +857,8 @@ class RemoteInputHandler {
 
         // Pressing Power opens the input guard FIRST, so the rest of this press — and anything the
         // hand brushes on the way — cannot undo the dim it is about to trigger.
-        if isPressed && buttonName == "power" {
+        if isPressed && buttonName == "power",
+           controller?.suppressesNativeBehavior(for: "button.power") != true {
             RemoteInputHandler.armInputGuard()
         }
 
@@ -872,7 +873,10 @@ class RemoteInputHandler {
         // guard only restores when currently at/near minimum, so normal-brightness presses are a
         // no-op here. Press only, never release. Skipped inside the input guard, which is the whole
         // point of it: Power itself must not restore, and neither may an accidental brush.
-        if isPressed && !RemoteInputHandler.isInputGuarded { Brightness.restoreIfDimmed() }
+        if isPressed && !RemoteInputHandler.isInputGuarded,
+           controller?.suppressesNativeBehavior(for: Self.configKey(for: buttonName)) != true {
+            Brightness.restoreIfDimmed()
+        }
 
         // Volume keys are left to the remote's native BT/AVRCP absolute-volume path so they
         // control system volume in every app (we no longer arm the revert guard to undo it).
@@ -949,6 +953,10 @@ class RemoteInputHandler {
         }
 
         // Select is the trackpad click — handled separately for click/drag semantics.
+        if buttonName == "select", controller?.suppressesNativeBehavior(for: "select") == true {
+            if !pressed { endPressScopedWork(buttonName) }
+            return
+        }
         if buttonName == "select" {
             handleSelectButton(pressed: intValue == 1)
             return
@@ -1152,6 +1160,7 @@ class RemoteInputHandler {
         let configuredPushToTalk = configuredBasePushToTalk ?? configuredHoldPushToTalk
         let nativeRequested = pressed && Self.nativeDictationClaims(
             tapKey, enabled: shouldUseNativeDictation?() == true
+                && !controller.suppressesNativeBehavior(for: tapKey)
         )
         let hasConfiguredPushToTalk = configuredPushToTalk != nil
         let nativeHandled = Controller.HandledAction(

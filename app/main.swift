@@ -1,6 +1,6 @@
 //
 //  main.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Application entry point
 //

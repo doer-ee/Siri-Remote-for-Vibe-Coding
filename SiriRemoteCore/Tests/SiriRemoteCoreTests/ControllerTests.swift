@@ -534,4 +534,52 @@ final class ControllerTests: XCTestCase {
         XCTAssertEqual(round, config, "`after` was lost on write-back")
         XCTAssertEqual(round.modes["global"]?.holdDelay["button.menu.hold2"], 1.2)
     }
+    func testIndependentLayerBlocksAllUnassignedVariantsAndNativeFallbacks() throws {
+        let config = try ConfigLoader.load("""
+        {"settings":{"defaultMode":"global","layers":[{"id":"BASE"},{"id":"L1","inheritsBaseBindings":false}]},
+         "appProfiles":{"default":"global","app":"editor"},
+         "modes":{"global":{
+            "button.siri.hold":{"action":"pushToTalk","keys":"ctrl+m"},
+            "button.playPause":{"action":"keystroke","keys":"enter"},
+            "button.playPause.double":{"action":"keystroke","keys":"escape"},
+            "button.tv":{"action":"layerCycle"},
+            "L1.button.menu":{"action":"keystroke","keys":"a"}},
+            "editor":{"inherits":"global","ring.up":{"action":"keystroke","keys":"up"}},
+            "L1":{"inherits":"global"}}}
+        """)
+        let spy = SpyExecutor()
+        let c = Controller(engine: MappingEngine(config: config), executor: spy)
+        c.frontmostAppChanged(bundleID: "app")
+        c.pushLayer("L1")
+        for key in ["button.siri.hold", "button.playPause", "button.playPause.double", "ring.up", "select", "touch", "button.volumeUp"] {
+            XCTAssertFalse(c.hasBinding(for: key), key)
+            XCTAssertNil(c.resolvedAction(for: key), key)
+            XCTAssertTrue(c.suppressesNativeBehavior(for: key), key)
+            XCTAssertFalse(c.handle(InputEvent(key: key)), key)
+        }
+        XCTAssertTrue(spy.executed.isEmpty)
+        XCTAssertTrue(c.handle(InputEvent(key: "button.menu")))
+        XCTAssertEqual(spy.executed.map(\.0), [.keystroke(keys: "a")])
+        XCTAssertEqual(c.resolvedAction(for: "button.tv"), .layerCycle)
+        XCTAssertFalse(c.suppressesNativeBehavior(for: "button.tv"))
+        c.popLayer()
+        XCTAssertNotNil(c.resolvedAction(for: "button.siri.hold"))
+        XCTAssertEqual(c.resolvedAction(for: "ring.up"), .keystroke(keys: "up"))
+        XCTAssertFalse(c.suppressesNativeBehavior(for: "select"))
+    }
+
+    func testIndependentLayerOwnBindingsAndHoldMetadataStillResolve() throws {
+        let config = try ConfigLoader.load("""
+        {"settings":{"defaultMode":"global","layers":[{"id":"BASE"},{"id":"L1","inheritsBaseBindings":false}]},
+         "modes":{"global":{"button.menu.hold2":{"action":"keystroke","keys":"b"}},
+         "L1":{"inherits":"global","button.menu.hold":{"action":"keystroke","keys":"a","after":0.3,"label":"Aux hold"}}}}
+        """)
+        let c = Controller(engine: MappingEngine(config: config), executor: SpyExecutor())
+        c.pushLayer("L1")
+        XCTAssertEqual(c.resolvedAction(for: "button.menu.hold"), .keystroke(keys: "a"))
+        XCTAssertEqual(c.resolvedHoldDelay(for: "button.menu.hold"), 0.3)
+        XCTAssertEqual(c.resolvedPresentation(for: "button.menu.hold")?.label, "Aux hold")
+        XCTAssertNil(c.resolvedAction(for: "button.menu.hold2"))
+    }
+
 }

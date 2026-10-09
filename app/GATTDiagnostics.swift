@@ -1,6 +1,6 @@
 //
 //  GATTDiagnostics.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Read-only CoreBluetooth inventory for mapping the Siri Remote's HID-over-GATT reports.
 //  Enabled only with `--dump-gatt <remote-name>`.

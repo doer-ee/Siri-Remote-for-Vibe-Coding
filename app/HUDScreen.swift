@@ -1,6 +1,6 @@
 //
 //  HUDScreen.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Stable display identity for one-HUD-window-per-screen mirroring.
 //

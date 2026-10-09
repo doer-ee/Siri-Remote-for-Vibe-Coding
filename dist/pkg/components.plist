@@ -12,7 +12,7 @@
         <key>BundleOverwriteAction</key>
         <string>upgrade</string>
         <key>RootRelativeBundlePath</key>
-        <string>Library/Application Support/HyperVibe Installer/payload/HyperVibe.app</string>
+        <string>Library/Application Support/Siri Remote Vibe Installer/payload/Siri Remote for Vibe Coding.app</string>
     </dict>
     <dict>
         <key>BundleHasStrictIdentifier</key>
@@ -24,7 +24,7 @@
         <key>BundleOverwriteAction</key>
         <string>upgrade</string>
         <key>RootRelativeBundlePath</key>
-        <string>Library/Application Support/HyperVibe Installer/payload/HyperVibe Uninstall.app</string>
+        <string>Library/Application Support/Siri Remote Vibe Installer/payload/Siri Remote Vibe Uninstall.app</string>
     </dict>
     <dict>
         <key>BundleHasStrictIdentifier</key>
@@ -36,7 +36,7 @@
         <key>BundleOverwriteAction</key>
         <string>upgrade</string>
         <key>RootRelativeBundlePath</key>
-        <string>Library/Application Support/HyperVibe Installer/payload/SiriRemoteMic.driver</string>
+        <string>Library/Application Support/Siri Remote Vibe Installer/payload/SiriRemoteMic.driver</string>
     </dict>
 </array>
 </plist>

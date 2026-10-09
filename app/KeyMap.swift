@@ -1,6 +1,6 @@
 //
 //  KeyMap.swift
-//  HyperVibe (config engine integration)
+//  Siri Remote Vibe (config engine integration)
 //
 //  Parses keystroke strings like "cmd+shift+up", "ctrl+9", or a modifier-only chord like
 //  "rctrl+rcmd+ropt" into ordered modifier keys + an optional main key. Supports left/right

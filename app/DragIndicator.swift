@@ -1,6 +1,6 @@
 //
 //  DragIndicator.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  A small badge pinned beside the pointer for as long as sticky drag is carrying something.
 //

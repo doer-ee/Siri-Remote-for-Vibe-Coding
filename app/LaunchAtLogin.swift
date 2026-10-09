@@ -1,9 +1,9 @@
 //
 //  LaunchAtLogin.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Start at login via SMAppService (macOS 13+). Registration is by bundle, so it follows
-//  HyperVibe.app wherever it lives and survives rebuilds in place — no LaunchAgent plist to keep in
+//  Siri Remote for Vibe Coding.app wherever it lives and survives rebuilds in place — no LaunchAgent plist to keep in
 //  sync with the binary's path. The registration also shows up in System Settings → General →
 //  Login Items, so it can always be turned off there even if this app is not running.
 //
@@ -21,7 +21,7 @@ enum LaunchAtLogin {
         /// Registered, but macOS wants the user to approve it in System Settings → Login Items.
         case requiresApproval
         /// SMAppService could not find this bundle to register (e.g. running the bare binary rather
-        /// than HyperVibe.app).
+        /// than Siri Remote for Vibe Coding.app).
         case unavailable
 
         var isOn: Bool { self == .enabled || self == .requiresApproval }
@@ -58,9 +58,9 @@ enum LaunchAtLogin {
         case .enabled:  return nil
         case .disabled: return nil
         case .requiresApproval:
-            return "Approve HyperVibe in System Settings → General → Login Items to finish enabling."
+            return "Approve Siri Remote Vibe in System Settings → General → Login Items to finish enabling."
         case .unavailable:
-            return "Unavailable — run the packaged HyperVibe.app (not the bare ./HyperVibe binary)."
+            return "Unavailable — run the packaged Siri Remote for Vibe Coding.app (not the bare ./SiriRemoteVibe binary)."
         }
     }
 

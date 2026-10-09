@@ -1,15 +1,15 @@
 #!/bin/bash
 # Native Installer postinstall. The package payload is deliberately staged, verified and then
-# installed by the same watchdog-protected routine used by HyperVibe Setup.app.
+# installed by the same watchdog-protected routine used by Siri Remote Vibe Setup.app.
 set -Eeuo pipefail
 
 TARGET_VOLUME="${3:-/}"
 if [ "$TARGET_VOLUME" != "/" ]; then
-    echo "HyperVibe can only be installed on the active macOS system volume." >&2
+    echo "Siri Remote for Vibe Coding can only be installed on the active macOS system volume." >&2
     exit 1
 fi
 
-STAGING="/Library/Application Support/HyperVibe Installer/payload"
+STAGING="/Library/Application Support/Siri Remote Vibe Installer/payload"
 LOG="/var/log/hypervibe-install.log"
 
 /usr/bin/touch "$LOG"
@@ -18,7 +18,7 @@ LOG="/var/log/hypervibe-install.log"
 exec >>"$LOG" 2>&1
 
 echo
-echo "=== HyperVibe native install: $(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ') ==="
+echo "=== Siri Remote for Vibe Coding native install: $(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ') ==="
 [ -x "$STAGING/do_install.sh" ] || {
     echo "Installer payload is incomplete: $STAGING/do_install.sh" >&2
     exit 1
@@ -27,7 +27,7 @@ echo "=== HyperVibe native install: $(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ') ==="
 /bin/bash "$STAGING/do_install.sh" "$STAGING"
 
 # Seed the public default config only for the active desktop user, and never overwrite an existing
-# configuration. If installation happens at the login window, HyperVibe bootstraps it on first run.
+# configuration. If installation happens at the login window, Siri Remote for Vibe Coding bootstraps it on first run.
 CONSOLE_USER="$(/usr/bin/stat -f '%Su' /dev/console 2>/dev/null || true)"
 if [[ "$CONSOLE_USER" =~ ^[A-Za-z_][A-Za-z0-9._-]*$ ]] && [ "$CONSOLE_USER" != "root" ] && [ "$CONSOLE_USER" != "loginwindow" ]; then
     USER_RECORD="/Users"
@@ -52,14 +52,14 @@ if [[ "$CONSOLE_USER" =~ ^[A-Za-z_][A-Za-z0-9._-]*$ ]] && [ "$CONSOLE_USER" != "
     fi
 fi
 
-/bin/rm -rf "/Library/Application Support/HyperVibe Installer"
+/bin/rm -rf "/Library/Application Support/Siri Remote Vibe Installer"
 
 # First launch opens the live System Check. Run in the logged-in GUI session so Installer itself
 # never owns Accessibility/Input Monitoring prompts.
 if [[ "$CONSOLE_USER" =~ ^[A-Za-z_][A-Za-z0-9._-]*$ ]] && [ "$CONSOLE_USER" != "root" ] && [ "$CONSOLE_USER" != "loginwindow" ]; then
     CONSOLE_UID="$(/usr/bin/id -u "$CONSOLE_USER")"
     /bin/launchctl asuser "$CONSOLE_UID" /usr/bin/sudo -u "$CONSOLE_USER" \
-        /usr/bin/open "/Applications/HyperVibe.app" --args --system-check >/dev/null 2>&1 || true
+        /usr/bin/open "/Applications/Siri Remote for Vibe Coding.app" --args --system-check >/dev/null 2>&1 || true
 fi
 
-echo "=== HyperVibe install complete ==="
+echo "=== Siri Remote for Vibe Coding install complete ==="

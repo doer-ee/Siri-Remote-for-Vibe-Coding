@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
   - name: Security vulnerability
-    url: https://github.com/HOLODATA-COM/SiriRemoteForge/security/advisories/new
+    url: https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/security/advisories/new
     about: Please report privately rather than opening a public issue.

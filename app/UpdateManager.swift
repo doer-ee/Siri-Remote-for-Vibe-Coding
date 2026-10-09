@@ -1,6 +1,6 @@
 //
 //  UpdateManager.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  One long-lived Sparkle controller for signed background updates. Preferences are mirrored from
 //  config.jsonc instead of being split between JSON and Sparkle's UserDefaults-backed controls.

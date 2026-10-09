@@ -1,6 +1,6 @@
 //
 //  VoiceHistory.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Small, app-scoped memory for ordinary dictation. Existing appProfiles are reused as style
 //  groups; apps without an explicit profile keep an independent bundle-scoped history.
@@ -254,7 +254,7 @@ final class VoiceHistoryStore: @unchecked Sendable {
     }
 }
 
-/// Observes only the accessibility value of the exact field HyperVibe just inserted into. It does
+/// Observes only the accessibility value of the exact field Siri Remote Vibe just inserted into. It does
 /// not install a keyboard event tap and never forwards the pre-existing field contents. A stable,
 /// bounded rewrite of the inserted span becomes feedback for the matching history record.
 final class VoiceCorrectionMonitor: @unchecked Sendable {

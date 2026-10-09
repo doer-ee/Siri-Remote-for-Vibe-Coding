@@ -1,6 +1,6 @@
 //
 //  VoiceFeedbackSound.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Low-latency, preloaded Voice edge cues. The paired Sci-fi Toggle on/off assets come from UI SFX
 //  and are bundled under CC0-1.0; see Resources/Sounds/UI-SFX-LICENSE.txt.
@@ -11,7 +11,7 @@ import Foundation
 
 final class VoiceFeedbackSound {
     /// The rendered assets include a short encoded/reverb tail (about 0.34–0.37 s total). Capture and the live
-    /// meter exclude this bounded interval so the laptop microphone cannot turn HyperVibe's own
+    /// meter exclude this bounded interval so the laptop microphone cannot turn Siri Remote Vibe's own
     /// cue into the first dictated phoneme; the already-prewarmed cloud session remains untouched.
     static let acousticExclusionDuration: TimeInterval = 0.30
 

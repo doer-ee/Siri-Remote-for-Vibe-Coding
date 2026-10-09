@@ -1,6 +1,6 @@
 //
 //  LayerHUD.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  A clean, BTT-style heads-up overlay shown briefly to confirm a state change on screen — a sticky
 //  LAYER toggling on/off, and the remote connecting or dropping. A light (dark-mode-aware) squircle

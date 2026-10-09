@@ -1,9 +1,9 @@
 //
 //  DemoMode.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  A remote-only floating visualiser driven by the same deduplicated HID edges and raw
-//  MultitouchSupport frames as normal operation. It never activates HyperVibe or intercepts input.
+//  MultitouchSupport frames as normal operation. It never activates Siri Remote Vibe or intercepts input.
 //
 
 import AppKit

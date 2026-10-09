@@ -1,6 +1,6 @@
 //
 //  AppWatcher.swift
-//  HyperVibe (config engine integration)
+//  Siri Remote Vibe (config engine integration)
 //
 //  Tracks the frontmost application and reports its bundle identifier so the
 //  config engine can switch modes per-app.

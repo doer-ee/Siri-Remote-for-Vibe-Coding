@@ -1,6 +1,6 @@
 //
 //  TouchMonitor.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  A live window showing everything the clickpad reports, including the fields the gesture code
 //  never reads. Built to answer questions by looking rather than by reasoning — the Z band in

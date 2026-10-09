@@ -1,9 +1,9 @@
 //
 //  ThinkingOrbCanvasView.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Thin AppKit renderer around ThinkingOrbEngine. The geometry, depth shading and painter order
-//  remain upstream-compatible; HyperVibe adds interruptible per-dot motion and a live acoustic
+//  remain upstream-compatible; Siri Remote Vibe adds interruptible per-dot motion and a live acoustic
 //  envelope for the listening wave.
 //
 

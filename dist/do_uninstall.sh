@@ -1,5 +1,5 @@
 #!/bin/bash
-# Privileged half of HyperVibe Uninstall.app.
+# Privileged half of Siri Remote Vibe Uninstall.app.
 # Removes installed binaries and restores the Bluetooth HCITraces preference. User configuration
 # and Apple's separately-downloaded PacketLogger are intentionally preserved.
 set -Eeuo pipefail
@@ -29,13 +29,14 @@ elif [ -f "$DEBUG_ABSENT_MARKER" ]; then
         2>/dev/null || true
 fi
 
-echo "→ removing HyperVibe and microphone components"
-/bin/rm -rf "$DRIVER" "$SUPPORT" "/Applications/HyperVibe.app"
+echo "→ removing Siri Remote for Vibe Coding and microphone components"
+/usr/bin/killall SiriRemoteVibe HyperVibe 2>/dev/null || true
+/bin/rm -rf "$DRIVER" "$SUPPORT" "/Applications/Siri Remote for Vibe Coding.app" "/Applications/HyperVibe.app"
 /bin/rm -f /var/log/srm_captured.log
 /usr/bin/killall coreaudiod 2>/dev/null || true
 /usr/bin/killall -30 bluetoothd 2>/dev/null || true
 
 # Remove the installed uninstaller last. Its process and this already-open script can finish safely.
-/bin/rm -rf "/Applications/HyperVibe Uninstall.app"
+/bin/rm -rf "/Applications/Siri Remote Vibe Uninstall.app" "/Applications/HyperVibe Uninstall.app"
 
 echo "OK"

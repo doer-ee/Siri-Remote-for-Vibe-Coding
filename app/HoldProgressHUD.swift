@@ -1,6 +1,6 @@
 //
 //  HoldProgressHUD.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Makes release-to-select visible. Multi-stage long-press fires whichever stage you were in when
 //  you let go, which is impossible to use without either memorising the thresholds or guessing.

@@ -45,15 +45,15 @@ do {
     // Split the only sequence forbidden inside CDATA without altering rendered Markdown.
     let safeNotes = notes.replacingOccurrences(of: "]]>", with: "]]]]><![CDATA[>")
     let encodedVersion = xmlEscape(version)
-    let packageURL = "https://github.com/doer-ee/SiriRemoteForge/releases/download/v\(encodedVersion)/\(xmlEscape(packageName))"
-    let releaseURL = "https://github.com/doer-ee/SiriRemoteForge/releases/tag/v\(encodedVersion)"
+    let packageURL = "https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases/download/v\(encodedVersion)/\(xmlEscape(packageName))"
+    let releaseURL = "https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases/tag/v\(encodedVersion)"
     let channelElement = channel == "stable"
         ? ""
         : "\n            <sparkle:channel>\(xmlEscape(channel))</sparkle:channel>"
     let item = """
 
         <item>
-            <title>HyperVibe \(encodedVersion)</title>
+            <title>SiriRemoteVibe \(encodedVersion)</title>
             <link>\(releaseURL)</link>
             <pubDate>\(xmlEscape(pubDate))</pubDate>
             <sparkle:version>\(xmlEscape(build))</sparkle:version>

@@ -10,7 +10,7 @@ if [ -z "$VERSION" ]; then
 fi
 . dist/version.sh
 BUILD_NUMBER="$(hypervibe_build_number "$VERSION")"
-ARCHIVE="dist/build/$VERSION/HyperVibe-$VERSION-macOS-arm64.zip"
+ARCHIVE="dist/build/$VERSION/SiriRemoteVibe-$VERSION-macOS-arm64.zip"
 NOTES="dist/release-notes-v$VERSION.md"
 APPCAST="$PWD/appcast.xml"
 

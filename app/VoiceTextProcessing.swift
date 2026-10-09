@@ -1,6 +1,6 @@
 //
 //  VoiceTextProcessing.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Deterministic dictionary correction runs first and locally. Optional cloud cleanup is a
 //  quality layer, never a single point of failure: an invalid/empty rewrite falls back to the
@@ -260,7 +260,7 @@ final class VoiceTextProcessor {
                 return VoiceCleanupResult(
                     text: deterministic,
                     usedCloudCleanup: false,
-                    warning: L("Polishing returned an unsafe rewrite, so HyperVibe kept the original transcript.")
+                    warning: L("Polishing returned an unsafe rewrite, so Siri Remote Vibe kept the original transcript.")
                 )
             }
             return VoiceCleanupResult(text: result, usedCloudCleanup: true, warning: nil)
@@ -268,7 +268,7 @@ final class VoiceTextProcessor {
             return VoiceCleanupResult(
                 text: deterministic,
                 usedCloudCleanup: false,
-                warning: L("Polishing failed, so HyperVibe used the unpolished transcript: %@",
+                warning: L("Polishing failed, so Siri Remote Vibe used the unpolished transcript: %@",
                            error.localizedDescription)
             )
         }

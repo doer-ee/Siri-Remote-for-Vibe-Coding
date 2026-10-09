@@ -121,6 +121,7 @@ final class MenuBarManager {
         guard let button = statusItem.button else { return }
         button.image = Self.makeWaveIcon()
         button.title = ""
+        button.toolTip = AppBrand.name
         rebuildMenu()
         statusItem.menu = menu
     }
@@ -128,7 +129,7 @@ final class MenuBarManager {
     private func rebuildMenu() {
         menu.removeAllItems()
 
-        let titleItem = NSMenuItem(title: "siriRemote", action: nil, keyEquivalent: "")
+        let titleItem = NSMenuItem(title: AppBrand.shortName, action: nil, keyEquivalent: "")
         titleItem.isEnabled = false
         menu.addItem(titleItem)
 
@@ -207,7 +208,7 @@ final class MenuBarManager {
             guard let self else { return }
             self.availableUpdateVersion = version
             self.statusItem.button?.image = Self.makeWaveIcon(updateAvailable: version != nil)
-            self.statusItem.button?.toolTip = version.map { L("Update %@ Available", $0) }
+            self.statusItem.button?.toolTip = version.map { AppBrand.shortName + " · " + L("Update %@ Available", $0) } ?? AppBrand.name
             self.rebuildMenu()
         }
     }

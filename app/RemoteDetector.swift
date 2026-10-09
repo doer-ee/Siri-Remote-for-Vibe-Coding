@@ -1,6 +1,6 @@
 //
 //  RemoteDetector.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Detects Siri Remote via IOKit HID
 //
@@ -122,7 +122,7 @@ class RemoteDetector {
                 == kIOHIDAccessTypeGranted
             rmDebug("🔐 Input Monitoring access: " + (granted
                 ? "granted"
-                : "NOT granted — use HyperVibe → System Check to enable it"))
+                : "NOT granted — use Siri Remote Vibe → System Check to enable it"))
             guard granted else { return }
         }
 

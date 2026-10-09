@@ -1,6 +1,6 @@
 //
 //  VoiceCredentials.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Cloud voice credentials never enter config.jsonc, UserDefaults, logs, crash text, or the app
 //  bundle. Certificate-bound builds use the login Keychain; public ad-hoc builds use a dedicated,
@@ -305,7 +305,7 @@ private extension VoiceCredentialKind {
 
 /// The broker executable is intentionally tiny and version-stable. macOS's legacy login-keychain
 /// ACL keys access to the executable CDHash, so isolating credentials here prevents every ordinary
-/// HyperVibe UI rebuild from causing another Keychain prompt. Calls are cached above and therefore
+/// Siri Remote Vibe UI rebuild from causing another Keychain prompt. Calls are cached above and therefore
 /// never occur on the physical button hot path.
 private final class VoiceCredentialBrokerClient {
     static let shared = VoiceCredentialBrokerClient()

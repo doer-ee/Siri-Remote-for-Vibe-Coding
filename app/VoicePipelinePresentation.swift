@@ -1,6 +1,6 @@
 //
 //  VoicePipelinePresentation.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  One visual vocabulary for native Voice's post-capture pipeline.  The always-on status card
 //  and the temporary Typeless-style Voice capsule deliberately render different compositions,

@@ -1,6 +1,6 @@
 //
 //  LayoutView.swift
-//  HyperVibe (settings UI — Layout tab)
+//  Siri Remote Vibe (settings UI — Layout tab)
 //
 //  Read-only "what every button does" map, built from the live parsed Config. An app "Hub"
 //  row (one chip per mode) selects the mode being viewed; the drawn RemoteView on the left and
@@ -34,6 +34,12 @@ struct LayoutView: View {
     @State private var addLayerColor = ""
     @State private var addLayerIcon = ""
     @State private var addTargetMode = "global"
+    private enum Manager: String, Identifiable {
+        case layers, apps
+        var id: String { rawValue }
+    }
+    @State private var manager: Manager?
+    @State private var showCopyLayer = false
 
     // The mode currently being viewed (falls back to the default if the selection is gone
     // after a hot-reload).
@@ -58,7 +64,7 @@ struct LayoutView: View {
         var legacy: [String] = []
         for (_, m) in config.modes {
             for (_, action) in m.bindings {
-                if case let .layer(name) = action, seen.insert(name).inserted { legacy.append(name) }
+                if case let .layer(name) = action, name != "BASE", seen.insert(name).inserted { legacy.append(name) }
             }
         }
         return result + legacy.sorted()
@@ -103,6 +109,26 @@ struct LayoutView: View {
             }
         }
         .background(Color(nsColor: .windowBackgroundColor))
+        .sheet(item: $manager) { selection in
+            if selection == .layers {
+                LayoutLayersManager(config: config, onSave: { onSave?($0) })
+            } else {
+                LayoutAppsManager(config: config, onSave: { onSave?($0) })
+            }
+        }
+        .sheet(isPresented: $showCopyLayer) {
+            LayoutCopyLayerView(config: config, target: editLayer ?? "BASE", onSave: { onSave?($0) })
+        }
+        .onChange(of: config) { updated in
+            if let layer = editLayer, !layerNames.contains(layer) {
+                editLayer = nil
+                selectedKey = nil
+            }
+            if let selected = selectedMode, updated.modes[selected] == nil {
+                selectedMode = nil
+                selectedKey = nil
+            }
+        }
     }
 
     private var pageBody: some View {
@@ -121,7 +147,7 @@ struct LayoutView: View {
     /// at least one `.layer` binding exists. Combined with the app hub above, this is the layer × app
     /// grid: pick an app, pick a layer, edit each input.
     @ViewBuilder private var layerBar: some View {
-        if !layerNames.isEmpty {
+        if !layerNames.isEmpty || onSave != nil {
             HStack(spacing: 8) {
                 Image(systemName: "square.stack.3d.up.fill")
                     .font(.system(size: 11)).foregroundStyle(editLayer == nil ? .secondary : Color.accentColor)
@@ -137,6 +163,7 @@ struct LayoutView: View {
                      ? L("for %@", mode == config.defaultModeName ? L("Global") : mode)
                      : L("→ what %@ does in %@", layerTitle(editLayer!), mode == config.defaultModeName ? L("Global") : mode))
                     .font(.system(size: 11)).foregroundStyle(.secondary)
+                Button(L("Copy From…")) { showCopyLayer = true }.disabled(onSave == nil)
                 Spacer()
             }
             .padding(.horizontal, 26).padding(.vertical, 5)
@@ -153,7 +180,7 @@ struct LayoutView: View {
                 .foregroundStyle(.secondary)
             Text(L("What every button does"))
                 .font(.system(size: 22, weight: .bold))
-            Text(L("Pick an app from the hub. Anything not set for that app falls back to Global, then to the remote's native behavior."))
+            Text(L("Pick an app and a layer. Independent layers ignore unassigned inputs; overlay layers inherit the main layer."))
                 .font(.system(size: 12)).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -171,18 +198,28 @@ struct LayoutView: View {
             if b == def { return false }
             return chipTitle(a, apps: apps, isDefault: false) < chipTitle(b, apps: apps, isDefault: false)
         }
-        return HStack(spacing: 8) {
-            Text(L("APP"))
-                .font(.system(size: 11, weight: .heavy)).tracking(1)
-                .foregroundStyle(.secondary)
-            ForEach(modes, id: \.self) { m in
-                chip(mode: m,
-                     title: chipTitle(m, apps: apps, isDefault: m == def),
-                     icon: chipIcon(m, apps: apps, isDefault: m == def),
-                     count: config.modes[m]?.bindings.count ?? 0)
+        return VStack(alignment: .leading, spacing: 8) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    Text(L("APP"))
+                        .font(.system(size: 11, weight: .heavy)).tracking(1)
+                        .foregroundStyle(.secondary)
+                    ForEach(modes, id: \.self) { m in
+                        chip(mode: m,
+                             title: chipTitle(m, apps: apps, isDefault: m == def),
+                             icon: chipIcon(m, apps: apps, isDefault: m == def),
+                             count: config.modes[m]?.bindings.count ?? 0)
+                    }
+                    addChip
+                }
             }
-            addChip
-            Spacer(minLength: 0)
+            HStack(spacing: 8) {
+                Button(L("Manage Apps…")) { manager = .apps }
+                    .disabled(onSave == nil)
+                Button(L("Manage Layers…")) { manager = .layers }
+                    .disabled(onSave == nil)
+                Spacer()
+            }
         }
         .padding(.horizontal, 26).padding(.top, 14).padding(.bottom, 6)
     }
@@ -469,19 +506,21 @@ struct LayoutView: View {
     }
 
     private func resolve(_ key: String) -> Resolved {
-        if let res = config.resolveBinding(key, in: mode) {
-            let presentation = MappingEngine(config: config).resolvePresentation(key, in: mode)
-            let visual = ActionVisual.resolve(res.action, presentation)
+        let engine = MappingEngine(config: config)
+        engine.switchMode(to: mode)
+        let bare = editLayer.map { String(key.dropFirst($0.count + 1)) } ?? key
+        if let res = engine.resolveBinding(bare, layer: editLayer) {
+            let visual = ActionVisual.resolve(res.action, res.presentation)
             let image = visual.image ?? Self.fallbackIcon("command")
-            if res.sourceMode == mode {
-                return Resolved(label: visual.label, image: image,
-                                kind: .custom, tag: L("Custom"))
-            }
-            let tag = res.sourceMode == config.defaultModeName ? L("Global") : L("Inherited")
-            return Resolved(label: visual.label, image: image,
-                            kind: .inherited, tag: tag)
+            let own = res.sourceMode == mode && res.key == key
+            return Resolved(label: visual.label, image: image, kind: own ? .custom : .inherited,
+                            tag: own ? L("Custom") : L("Inherited"))
         }
-        return Resolved(label: Self.nativeLabel(key), image: Self.nativeIcon(key),
+        if let layer = editLayer, !config.layerInheritsBaseBindings(layer) {
+            return Resolved(label: L("No action"), image: Self.fallbackIcon("nosign"),
+                            kind: .system, tag: L("Disabled"))
+        }
+        return Resolved(label: Self.nativeLabel(bare), image: Self.nativeIcon(bare),
                         kind: .system, tag: L("System"))
     }
 
@@ -1241,7 +1280,7 @@ private struct RunningAppChoice: Identifiable, Hashable {
     var id: String { bundleIdentifier }
 }
 
-/// Headless renderer for the Layout tab — used by `HyperVibe --snapshot-layout <path>` so the UI
+/// Headless renderer for the Layout tab — used by `Siri Remote Vibe --snapshot-layout <path>` so the UI
 /// can be captured without a visible window or any UI-scripting permissions. macOS 13+ ImageRenderer.
 @MainActor
 enum LayoutSnapshot {

@@ -1,6 +1,6 @@
 //
 //  VoiceInputSelfTest.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Headless, non-destructive verification for the native voice path. Local tests never seize the
 //  remote or emit keyboard events. Explicit API tests consume a caller-supplied synthetic WAV and
@@ -89,7 +89,7 @@ enum VoiceInputSelfTest {
                "either remote touch surface takes ownership without a stale peer lift ending it")
 
         let credentialTestRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("HyperVibe-Credential-Test-\(UUID().uuidString)",
+            .appendingPathComponent("Siri Remote Vibe-Credential-Test-\(UUID().uuidString)",
                                     isDirectory: true)
         defer { try? FileManager.default.removeItem(at: credentialTestRoot) }
         do {
@@ -141,7 +141,7 @@ enum VoiceInputSelfTest {
                && appContext.styleKey == "app:com.tencent.xinwechat",
                "voice history uses exact app groups and never applies the default mode as a group")
         let historyTestRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("HyperVibe-History-Test-\(UUID().uuidString)",
+            .appendingPathComponent("Siri Remote Vibe-History-Test-\(UUID().uuidString)",
                                     isDirectory: true)
         defer { try? FileManager.default.removeItem(at: historyTestRoot) }
         let historyStore = VoiceHistoryStore(rootURL: historyTestRoot)
@@ -171,14 +171,14 @@ enum VoiceInputSelfTest {
                "voice history file is current-user-only")
 
         let dictionary: [Config.DictationTerm] = [
-            .init(term: "HyperVibe", aliases: ["hyper vibe", "Hyper Vibe"]),
+            .init(term: "Siri Remote Vibe", aliases: ["hyper vibe", "Hyper Vibe"]),
             .init(term: "Siri Remote", aliases: ["siri remote"]),
             .init(term: "Price$1", aliases: ["price one"]),
         ]
         let corrected = VoiceDictionary.apply(
             to: "Open hyper vibe with siri remote and price one.", entries: dictionary
         )
-        expect(corrected == "Open HyperVibe with Siri Remote and Price$1.",
+        expect(corrected == "Open Siri Remote Vibe with Siri Remote and Price$1.",
                "dictionary correction + replacement escaping")
         expect(VoiceDictionary.apply(to: "hyper vibrant", entries: dictionary) == "hyper vibrant",
                "dictionary word boundary")
@@ -770,7 +770,7 @@ enum VoiceInputSelfTest {
                && bootstrapped?.settings.dictation.minimumRecordingSeconds == 1
                && bootstrapped?.settings.dictation.feedbackSoundsEnabled == true
                && bootstrapped?.settings.dictation.feedbackSoundVolume == 0.55
-               && bootstrappedTerms.isSuperset(of: ["hypervibe", "layer", "core"]),
+               && bootstrappedTerms.isSuperset(of: ["siri remote vibe", "layer", "core"]),
                "first-run config exposes valid dictation defaults")
         let layerPaletteProbe = VoiceLayerPalette.tint(
             for: "L1", layers: [
@@ -977,7 +977,7 @@ enum VoiceInputSelfTest {
                && NSPasteboard.general.string(forType: .string) == clipboardBeforeStrictReplacement,
                "strict AX selection replacement itself never mutates the clipboard")
         let fallbackSnapshot = VoicePasteboardSnapshot(NSPasteboard.general)
-        let mandatoryFallbackText = "HyperVibe mandatory clipboard recovery"
+        let mandatoryFallbackText = "Siri Remote Vibe mandatory clipboard recovery"
         let mandatoryFallbackOutcome = await delivery.deliverFinal(
             mandatoryFallbackText,
             to: VoiceTextTarget(
@@ -1178,7 +1178,7 @@ enum VoiceInputSelfTest {
                 var settings = Config.DictationSettings()
                 settings.enabled = true
                 settings.cleanupProvider = mode == "openai-cleanup" ? .openAI : .deepSeek
-                settings.dictionary = [.init(term: "HyperVibe", aliases: ["hyper vibe"])]
+                settings.dictionary = [.init(term: "Siri Remote Vibe", aliases: ["hyper vibe"])]
                 let processor = VoiceTextProcessor()
                 var prewarmMilliseconds = 0.0
                 if mode == "prewarmed-deepseek-cleanup" {
@@ -1204,7 +1204,7 @@ enum VoiceInputSelfTest {
                 var settings = Config.DictationSettings()
                 settings.enabled = true
                 settings.cleanupProvider = .deepSeek
-                settings.dictionary = [.init(term: "HyperVibe", aliases: ["hyper vibe"])]
+                settings.dictionary = [.init(term: "Siri Remote Vibe", aliases: ["hyper vibe"])]
                 let processor = VoiceTextProcessor()
                 await processor.prewarm(settings)
                 let sources = [

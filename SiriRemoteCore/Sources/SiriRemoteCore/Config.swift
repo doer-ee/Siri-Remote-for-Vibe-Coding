@@ -141,12 +141,15 @@ public struct Config: Equatable {
         public var name: String?
         public var color: String?
         public var icon: String?
+        /// Missing in legacy files means overlay behavior. New layers are independent.
+        public var inheritsBaseBindings: Bool?
         public init(id: String, name: String? = nil, color: String? = nil,
-                    icon: String? = nil) {
+                    icon: String? = nil, inheritsBaseBindings: Bool? = nil) {
             self.id = id
             self.name = name
             self.color = color
             self.icon = icon
+            self.inheritsBaseBindings = inheritsBaseBindings
         }
     }
 
@@ -509,7 +512,7 @@ public extension Config {
             copy.modes[id] = Mode(inherits: inherits, bindings: [:])
         }
         copy.settings.layers.append(LayerDefinition(id: id, name: name, color: color,
-                                                    icon: icon))
+                                                    icon: icon, inheritsBaseBindings: false))
         return copy
     }
 
@@ -517,7 +520,7 @@ public extension Config {
     /// (other modes that inherited it are re-parented to nil, so the result still loads). Refuses to
     /// remove the default mode — deleting it would leave the config with no valid default.
     func removeMode(_ name: String) -> Config {
-        guard name != settings.defaultMode else { return self }
+        guard name != settings.defaultMode, name != defaultModeName, name != "BASE" else { return self }
         var copy = self
         copy.modes.removeValue(forKey: name)
         copy.settings.layers.removeAll {
@@ -526,6 +529,135 @@ public extension Config {
         copy.settings.dictation.layerModes.removeValue(forKey: name)
         for (bundle, m) in copy.appProfiles where m == name { copy.appProfiles.removeValue(forKey: bundle) }
         for (other, mode) in copy.modes where mode.inherits == name { copy.modes[other]?.inherits = nil }
+        return copy.removingLayerReferences(to: name, removeModeActions: true)
+    }
+
+    /// A display-name edit never changes the stable id used by bindings and saved Voice settings.
+    func renameLayer(_ id: String, to name: String) -> Config {
+        let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return self }
+        var copy = self
+        if copy.settings.layers.isEmpty {
+            copy.settings.layers = [LayerDefinition(id: "BASE")]
+        }
+        if let index = copy.settings.layers.firstIndex(where: { $0.id == id }) {
+            copy.settings.layers[index].name = title
+        } else if id != "BASE", copy.modes[id] != nil, copy.settings.layers.count < 10 {
+            copy.settings.layers.append(LayerDefinition(id: id, name: title))
+        } else {
+            return self
+        }
+        return copy
+    }
+
+    /// Legacy layers inherit unless explicitly opted out; BASE always keeps its native behavior.
+    func layerInheritsBaseBindings(_ id: String) -> Bool {
+        id == "BASE" || (settings.layers.first { $0.id == id }?.inheritsBaseBindings ?? true)
+    }
+
+    func setLayerInheritance(_ enabled: Bool, for id: String) -> Config {
+        guard id != "BASE", let index = settings.layers.firstIndex(where: { $0.id == id }) else { return self }
+        var copy = self
+        copy.settings.layers[index].inheritsBaseBindings = enabled
+        return copy
+    }
+
+    /// Snapshot the source layer's effective mappings for every app profile. Replace the target's
+    /// mappings (including presentation and hold timing), retaining both layers' identity/settings.
+    /// There is no live link: subsequent source edits cannot change the copied layer.
+    func copyLayerBindings(from source: String, to target: String) -> Config {
+        let ids = Set(settings.layers.map(\.id)).union(["BASE"])
+        guard source != target, ids.contains(source), ids.contains(target) else { return self }
+        let layerIDs = ids.subtracting(["BASE"])
+        let appModes = modes.keys.filter { !layerIDs.contains($0) || appProfiles.values.contains($0) || $0 == defaultModeName }
+        func isInput(_ key: String) -> Bool {
+            key == "select" || key == "touch" || key == "scroll"
+                || ["button.", "ring.", "swipe.", "tap."].contains { key.hasPrefix($0) }
+        }
+        let inputs = Set(modes.values.flatMap { mode in mode.bindings.keys.compactMap { key -> String? in
+            if isInput(key) { return key }
+            for id in layerIDs where key.hasPrefix(id + ".") {
+                let bare = String(key.dropFirst(id.count + 1))
+                if isInput(bare) { return bare }
+            }
+            return nil
+        } })
+        let engine = MappingEngine(config: self)
+        var snapshots: [String: [String: MappingEngine.ResolvedBinding]] = [:]
+        for mode in appModes {
+            engine.switchMode(to: mode)
+            for key in inputs {
+                if let binding = engine.resolveBinding(key, layer: source == "BASE" ? nil : source) {
+                    snapshots[mode, default: [:]][key] = binding
+                }
+            }
+        }
+        var copy = self
+        for name in copy.modes.keys.sorted() {
+            guard var mode = copy.modes[name] else { continue }
+            let clear: (String) -> Bool = { key in
+                target == "BASE" ? isInput(key) : key.hasPrefix(target + ".") || (name == target && isInput(key))
+            }
+            mode.bindings = mode.bindings.filter { !clear($0.key) }
+            mode.presentation = mode.presentation.filter { !clear($0.key) }
+            mode.holdDelay = mode.holdDelay.filter { !clear($0.key) }
+            copy.modes[name] = mode
+        }
+        for (name, mappings) in snapshots {
+            for (key, binding) in mappings {
+                let dest = target == "BASE" ? key : target + "." + key
+                copy.modes[name]?.bindings[dest] = binding.action
+                copy.modes[name]?.presentation[dest] = binding.presentation
+                copy.modes[name]?.holdDelay[dest] = binding.holdDelay
+            }
+        }
+        return copy
+    }
+
+    /// Shared app modes survive deleting their Layer role. BASE is the mandatory fallback.
+    func removeLayer(_ id: String) -> Config {
+        guard id != "BASE" else { return self }
+        if id != settings.defaultMode, id != defaultModeName,
+           !appProfiles.values.contains(id) {
+            return removeMode(id)
+        }
+        var copy = self
+        copy.settings.layers.removeAll { $0.id == id }
+        copy.settings.dictation.layerModes.removeValue(forKey: id)
+        return copy.removingLayerReferences(to: id, removeModeActions: false)
+    }
+
+    /// Deleting the last app using a dedicated mode also removes its now-unused hub chip.
+    /// Modes shared by another app or a Layer are retained.
+    func removeAppProfile(_ bundleID: String) -> Config {
+        guard bundleID != "default", let mode = appProfiles[bundleID] else { return self }
+        var copy = setAppProfile(bundleID: bundleID, mode: nil)
+        let usedAsLayer = settings.layers.contains { $0.id == mode }
+            || modes.values.contains { $0.bindings.values.contains(.layer(mode)) }
+        if !copy.appProfiles.values.contains(mode), !usedAsLayer {
+            copy = copy.removeMode(mode)
+        }
+        return copy
+    }
+
+    private func removingLayerReferences(to id: String, removeModeActions: Bool) -> Config {
+        var copy = self
+        for modeName in copy.modes.keys.sorted() {
+            guard var mode = copy.modes[modeName] else { continue }
+            let removedKeys = mode.bindings.compactMap { key, action -> String? in
+                if key.hasPrefix(id + ".") || action == .layer(id)
+                    || (removeModeActions && action == .mode(to: id)) { return key }
+                return nil
+            }
+            for key in removedKeys { mode.bindings.removeValue(forKey: key) }
+            mode.presentation = mode.presentation.filter {
+                !$0.key.hasPrefix(id + ".") && !removedKeys.contains($0.key)
+            }
+            mode.holdDelay = mode.holdDelay.filter {
+                !$0.key.hasPrefix(id + ".") && !removedKeys.contains($0.key)
+            }
+            copy.modes[modeName] = mode
+        }
         return copy
     }
 

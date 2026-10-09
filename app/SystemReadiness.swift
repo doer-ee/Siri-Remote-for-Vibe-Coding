@@ -1,6 +1,6 @@
 //
 //  SystemReadiness.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  One source of truth for first-run and ongoing health checks. Querying this type is passive: it
 //  never opens System Settings and never triggers a TCC prompt. Permission prompts only happen from
@@ -48,7 +48,7 @@ struct SystemReadinessSnapshot: Equatable {
 }
 
 enum SystemReadiness {
-    private static let appPath = "/Applications/HyperVibe.app"
+    private static let appPath = "/Applications/Siri Remote for Vibe Coding.app"
     private static let systemEventsBundleID = "com.apple.systemevents"
 
     static func snapshot(automation: AutomationPermissionState = .checking) -> SystemReadinessSnapshot {
@@ -86,7 +86,7 @@ enum SystemReadiness {
         )
     }
 
-    /// Register HyperVibe with the Accessibility privacy service and let macOS present its native
+    /// Register Siri Remote Vibe with the Accessibility privacy service and let macOS present its native
     /// explanation. Opening the pane is a separate UI affordance, so the user never gets a prompt
     /// and a settings jump piled on top of one another.
     static func requestAccessibility() {
@@ -143,7 +143,7 @@ enum SystemReadiness {
     }
 
     static func openReleaseDownloads() {
-        guard let url = URL(string: "https://github.com/doer-ee/SiriRemoteForge/releases")
+        guard let url = URL(string: "https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases")
         else { return }
         NSWorkspace.shared.open(url)
     }

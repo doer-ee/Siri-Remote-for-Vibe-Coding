@@ -6,10 +6,11 @@ process and more about the handful of things that are easy to get wrong here.
 ## Getting set up
 
 ```bash
-git clone https://github.com/HOLODATA-COM/SiriRemoteForge.git
-cd SiriRemoteForge
+git clone https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding.git
+cd Siri-Remote-for-Vibe-Coding
 swift test --package-path SiriRemoteCore   # engine tests, no hardware needed
 cd app && ./build.sh && ./create_app_bundle.sh
+# Install and launch the verified bundle in /Applications; see AGENTS.md.
 ```
 
 `SiriRemoteCore/` is dependency-free SwiftPM with unit tests, and is where most logic belongs.

@@ -1,10 +1,10 @@
 //
 //  VoicePipelineHUD.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  A temporary, Typeless-style Voice capsule.  It is intentionally independent from the optional
 //  always-on Layer widget: native dictation must still have immediate visual feedback when that
-//  widget is disabled.  The capsule never activates HyperVibe, never changes size between states,
+//  widget is disabled.  The capsule never activates Siri Remote Vibe, never changes size between states,
 //  joins every Space, and follows the display containing the pointer. Each Voice turn begins at
 //  the lower centre of that display; the user may drag it for the lifetime of the current turn.
 //

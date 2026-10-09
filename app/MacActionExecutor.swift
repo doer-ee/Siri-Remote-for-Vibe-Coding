@@ -1,6 +1,6 @@
 //
 //  MacActionExecutor.swift
-//  HyperVibe (config engine integration)
+//  Siri Remote Vibe (config engine integration)
 //
 //  Bridges SiriRemoteCore `Action`s to real macOS effects (CGEvent, media keys,
 //  app launch, shell, AppleScript). `Action`, `EventPayload`, `ActionExecutor`
@@ -86,6 +86,12 @@ final class MacActionExecutor: ActionExecutor {
 // MARK: - Effect helpers (self-contained CGEvent / Process wrappers)
 
 enum Keys {
+    private static func post(_ event: CGEvent?) {
+        guard let event = event else { return }
+        HeldShortcutModifiers.shared.prepareSynthetic(event)
+        event.post(tap: .cghidEventTap)
+    }
+
     /// One reused event source for the ~66/s hold-repeat ticks — allocating a fresh `CGEventSource`
     /// every tick is avoidable churn on a cadence meant to match the keyboard. Used by `holdRepeat`.
     private static let sharedSource = CGEventSource(stateID: .combinedSessionState)
@@ -103,7 +109,7 @@ enum Keys {
             f.insert(m.flag)
             let e = CGEvent(keyboardEventSource: src, virtualKey: m.keyCode, keyDown: true)
             e?.flags = f
-            e?.post(tap: .cghidEventTap)
+            post(e)
         }
 
         if let mainKey = parsed.mainKey {
@@ -111,8 +117,8 @@ enum Keys {
             down?.flags = f
             let up = CGEvent(keyboardEventSource: src, virtualKey: mainKey, keyDown: false)
             up?.flags = f
-            down?.post(tap: .cghidEventTap)
-            up?.post(tap: .cghidEventTap)
+            post(down)
+            post(up)
         } else {
             // Modifier-only chord (e.g. "rctrl+rcmd+ropt"): hold briefly so a hyperkey tool sees it.
             usleep(30000)
@@ -123,7 +129,7 @@ enum Keys {
             f.remove(m.flag)
             let e = CGEvent(keyboardEventSource: src, virtualKey: m.keyCode, keyDown: false)
             e?.flags = f
-            e?.post(tap: .cghidEventTap)
+            post(e)
         }
     }
 
@@ -164,18 +170,19 @@ enum Keys {
         guard let parsed = KeyMap.parse(combo) else {
             NSLog("[siriRemote] unknown keystroke '\(combo)'"); return nil
         }
+        HeldShortcutModifiers.shared.begin(parsed.mods)
         let src = CGEventSource(stateID: .combinedSessionState)
         var f: CGEventFlags = []
         for m in parsed.mods {
             f.insert(m.flag)
             let e = CGEvent(keyboardEventSource: src, virtualKey: m.keyCode, keyDown: true)
             e?.flags = f
-            e?.post(tap: .cghidEventTap)
+            post(e)
         }
         if let mainKey = parsed.mainKey {
             let down = CGEvent(keyboardEventSource: src, virtualKey: mainKey, keyDown: true)
             down?.flags = f
-            down?.post(tap: .cghidEventTap)
+            post(down)
         }
         return parsed
     }
@@ -188,24 +195,25 @@ enum Keys {
         let e = CGEvent(keyboardEventSource: sharedSource, virtualKey: mainKey, keyDown: true)
         e?.flags = parsed.flags
         e?.setIntegerValueField(.keyboardEventAutorepeat, value: 1)
-        e?.post(tap: .cghidEventTap)
+        post(e)
     }
 
     /// Release a held combo: main key up, then modifiers up in reverse order. This is the ONLY thing
     /// that lifts a held key, so it must run on every teardown path.
     static func holdEnd(_ parsed: KeyMap.Combo) {
+        HeldShortcutModifiers.shared.end(parsed.mods)
         let src = CGEventSource(stateID: .combinedSessionState)
         var f = parsed.flags
         if let mainKey = parsed.mainKey {
             let up = CGEvent(keyboardEventSource: src, virtualKey: mainKey, keyDown: false)
             up?.flags = f
-            up?.post(tap: .cghidEventTap)
+            post(up)
         }
         for m in parsed.mods.reversed() {
             f.remove(m.flag)
             let e = CGEvent(keyboardEventSource: src, virtualKey: m.keyCode, keyDown: false)
             e?.flags = f
-            e?.post(tap: .cghidEventTap)
+            post(e)
         }
     }
 }

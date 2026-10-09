@@ -32,10 +32,10 @@ cleanup() {
 trap cleanup EXIT
 
 APPCAST="$VERIFY_ROOT/appcast.xml"
-ARCHIVE_NAME="HyperVibe-$VERSION-macOS-arm64.zip"
+ARCHIVE_NAME="SiriRemoteVibe-$VERSION-macOS-arm64.zip"
 ARCHIVE="$VERIFY_ROOT/$ARCHIVE_NAME"
-FEED_URL="https://raw.githubusercontent.com/doer-ee/SiriRemoteForge/main/appcast.xml"
-EXPECTED_URL="https://github.com/doer-ee/SiriRemoteForge/releases/download/v$VERSION/$ARCHIVE_NAME"
+FEED_URL="https://raw.githubusercontent.com/doer-ee/Siri-Remote-for-Vibe-Coding/main/appcast.xml"
+EXPECTED_URL="https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases/download/v$VERSION/$ARCHIVE_NAME"
 
 /usr/bin/curl --fail --location --silent --show-error \
     -H 'Cache-Control: no-cache' "$FEED_URL?version=$EXPECTED_BUILD" -o "$APPCAST"
@@ -79,14 +79,14 @@ ACTUAL_LENGTH="$(/usr/bin/stat -f '%z' "$ARCHIVE")"
 
 /bin/mkdir -p "$VERIFY_ROOT/extracted"
 /usr/bin/ditto -x -k "$ARCHIVE" "$VERIFY_ROOT/extracted"
-APP="$VERIFY_ROOT/extracted/HyperVibe.app"
-[ -d "$APP" ] || { echo "archive does not contain HyperVibe.app" >&2; exit 1; }
+APP="$VERIFY_ROOT/extracted/Siri Remote for Vibe Coding.app"
+[ -d "$APP" ] || { echo "archive does not contain Siri Remote for Vibe Coding.app" >&2; exit 1; }
 /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP"
 [ "$(/usr/bin/plutil -extract HyperVibeReleaseVersion raw -o - "$APP/Contents/Info.plist")" \
     = "$VERSION" ]
 [ "$(/usr/bin/plutil -extract CFBundleVersion raw -o - "$APP/Contents/Info.plist")" \
     = "$EXPECTED_BUILD" ]
 [ "$(/usr/bin/plutil -extract SUFeedURL raw -o - "$APP/Contents/Info.plist")" = "$FEED_URL" ]
-[ "$(/usr/bin/lipo -archs "$APP/Contents/MacOS/HyperVibe")" = "arm64" ]
+[ "$(/usr/bin/lipo -archs "$APP/Contents/MacOS/SiriRemoteVibe")" = "arm64" ]
 
 echo "PUBLISHED_UPDATE_VERIFY PASS version=$VERSION build=$EXPECTED_BUILD bytes=$ACTUAL_LENGTH"

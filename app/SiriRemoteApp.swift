@@ -1,6 +1,6 @@
 //
 //  SiriRemoteApp.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Menu bar application for controlling Mac with Siri Remote
 //
@@ -42,7 +42,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     /// App-native low-latency speech-to-text. Separate from the legacy external PTT hotkey route.
     private var voiceDictation: VoiceDictationCoordinator?
     /// Pre-rendered, paired native-Voice edge sounds. The existing Layer 1 external workflow keeps
-    /// owning its own feedback, so HyperVibe plays these only for native Layer 2/3 sessions.
+    /// owning its own feedback, so Siri Remote Vibe plays these only for native Layer 2/3 sessions.
     private var voiceFeedbackSound: VoiceFeedbackSound?
     private var preparedVoiceDictionary: [Config.DictationTerm]?
     /// Mirror of the tune flag — the shake→highlight path is gated on this (see `applyTune`).
@@ -97,7 +97,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        print("🚀 HyperVibe starting...")
+        print("🚀 Siri Remote Vibe starting...")
 
         // `--enable-login-item` / `--disable-login-item`: apply and exit, before anything is wired
         // up or the remote is seized. Registration has to come from the app bundle itself, so this
@@ -455,7 +455,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         VoiceTextDeliverer.resolveTarget(seed)
                     }.value
                     let outcome = await deliverer.deliverFinal(
-                        "HyperVibe browser delivery test", to: target, settings: settings
+                        "Siri Remote Vibe browser delivery test", to: target, settings: settings
                     )
                     print("VOICE_FINAL_DELIVERY_TEST \(outcome.wasDelivered ? "PASS" : "FAIL") "
                           + "app=\(target.bundleIdentifier ?? "unknown") outcome=\(outcome)")
@@ -1102,7 +1102,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let close = face(.closeWindow,
                              .init(label: "Close Window", icon: "xmark.circle.fill"))
             let quit = face(
-                .applescript(script: "tell application \"System Events\" to set n to name of first application process whose frontmost is true\nif n is not \"HyperVibe\" then tell application n to quit"),
+                .applescript(script: "tell application \"System Events\" to set n to name of first application process whose frontmost is true\nif n is not \"SiriRemoteVibe\" and n is not \"Siri Remote for Vibe Coding\" then tell application n to quit"),
                 .init(label: "Quit App", icon: "power")
             )
             var cancel = face(.mouse(op: "click"),
@@ -1240,7 +1240,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         // --- Config engine (SiriRemoteCore): config bindings override native button behavior;
-        //     unbound buttons fall through to HyperVibe's native mapping. ---
+        //     unbound buttons fall through to Siri Remote Vibe's native mapping. ---
         let config = ConfigStore.loadConfig()
         SystemControlState.prewarm()
 
@@ -1331,7 +1331,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         remoteInputHandler?.onPhysicalButtonStateReset = { [weak demoWindow] in
             demoWindow?.resetPhysicalButtons()
         }
-        // Convenience: `./HyperVibe --settings` pops the window open immediately.
+        // Convenience: `./SiriRemoteVibe --settings` pops the window open immediately.
         if CommandLine.arguments.contains("--settings") {
             DispatchQueue.main.async { settingsWin.show() }
         }
@@ -1372,8 +1372,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // If a sticky layer's mode was deleted/renamed in the edit, clear it — otherwise every
             // key would resolve against a missing layer (→ nil → all bindings dead) with no way to
             // pop it. Do this BEFORE reload so the pop lands on the old engine cleanly.
-            if let layer = self?.controller?.currentLayer, reloaded.modes[layer] == nil {
-                self?.remoteInputHandler?.clearStickyLayer()
+            if let layer = self?.controller?.currentLayer {
+                let remainsSelectable = reloaded.settings.layers.contains { $0.id == layer }
+                    || reloaded.modes.values.contains { $0.bindings.values.contains(.layer(layer)) }
+                if reloaded.modes[layer] == nil || !remainsSelectable {
+                    self?.remoteInputHandler?.clearStickyLayer()
+                }
             }
             self?.controller?.reload(config: reloaded)
             // reload() resets the engine to the default mode; re-apply the current frontmost app so
@@ -1422,14 +1426,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // The outer-ring gesture is vertical in the base layer and horizontal in Layer 1. Listen to
         // Controller rather than only the sticky-layer HUD callback so momentary L1 holds work too.
         engineController.onLayerChanged = {
-            [weak touch, weak persistentStatus, weak pipelineHUD] layer in
+            [weak self, weak touch, weak persistentStatus, weak pipelineHUD] layer in
             touch?.circularScrollAxis = layer == "L1" ? .horizontal : .vertical
             persistentStatus?.setLayer(layer)
             pipelineHUD?.setLayer(layer)
+            self?.applyTouchInputConfig()
         }
         touch.onSwipe = { [weak self] direction in
             // Swipes are config-driven only. An unbound swipe does nothing — no native fallback,
-            // so HyperVibe's Claude-Code default swipe keys (e.g. right = Shift+Tab) no longer
+            // so Siri Remote Vibe's Claude-Code default swipe keys (e.g. right = Shift+Tab) no longer
             // fire and cause the system beep. Bind swipe.<dir> in the config to use them.
             self?.remoteInputHandler?.noteLayerUsedByOtherInput()   // swipe while holding a layer = use
             let key = "swipe.\(direction.rawValue)"
@@ -1753,7 +1758,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             disabled = false
         }
-        touch.setTouchInputEnabled(!disabled)
+        let suppressNative = controller?.suppressesNativeBehavior(for: "touch") == true
+        let hasGesture = ["swipe.up", "swipe.down", "swipe.left", "swipe.right", "tap.two"]
+            .contains { controller?.hasBinding(for: $0) == true }
+        touch.setNativeTouchBehaviorEnabled(!suppressNative)
+        touch.setTouchInputEnabled(!disabled && (!suppressNative || hasGesture))
     }
 
     /// Push cursor-feel settings from config into the touch handler (also called on hot reload).
@@ -1948,7 +1957,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         false
     }
 
-    /// Re-opening the app (double-clicking HyperVibe.app while it's already running, or clicking it
+    /// Re-opening the app (double-clicking Siri Remote for Vibe Coding.app while it's already running, or clicking it
     /// in the Dock) opens the Settings window. This is the reliable way to reach the UI when the
     /// menu-bar icon is hidden — e.g. squeezed behind the notch on a crowded menu bar.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -2059,7 +2068,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let bound = [base, base + ".double", base + ".triple",
                      base + ".hold", base + ".hold2", base + ".hold3"]
             .contains { controller?.hasBinding(for: $0) ?? false }
-        return fromRemote && bound
+        return fromRemote && (bound || controller?.suppressesNativeBehavior(for: base) == true)
     }
     
     // MARK: - Permissions
@@ -2115,7 +2124,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 /// Suspends `com.apple.rcd` (Remote Control Daemon) for the user's GUI launchd domain while
-/// HyperVibe is running. rcd is what reacts to Bluetooth AVRCP play signals by launching
+/// Siri Remote Vibe is running. rcd is what reacts to Bluetooth AVRCP play signals by launching
 /// Music.app — a channel that bypasses HID seize and the cghidEventTap entirely. `bootout`
 /// only affects this login session; restored on clean exit, and on next login either way.
 enum RCDControl {

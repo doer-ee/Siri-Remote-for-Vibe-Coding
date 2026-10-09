@@ -1,6 +1,6 @@
 //
 //  Spaces.swift
-//  HyperVibe (config engine integration)
+//  Siri Remote Vibe (config engine integration)
 //
 //  Switch macOS Spaces (desktops).
 //
@@ -21,7 +21,7 @@
 //                                       hardware-modifier check.
 //
 //  So this goes through System Events. It needs Automation permission (macOS prompts once for
-//  "HyperVibe wants to control System Events"); without it the call fails silently, hence the
+//  "Siri Remote Vibe wants to control System Events"); without it the call fails silently, hence the
 //  error logging.
 //
 //  Historical note: this file previously used the CGS route and reported success, which is why

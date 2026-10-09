@@ -1,6 +1,6 @@
 //
 //  SettingsModel.swift
-//  HyperVibe (settings UI)
+//  Siri Remote Vibe (settings UI)
 //
 
 import Foundation

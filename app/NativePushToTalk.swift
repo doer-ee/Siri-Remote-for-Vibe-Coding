@@ -1,6 +1,6 @@
 //
 //  NativePushToTalk.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Calls the AppleBluetoothRemote driver's own PushToTalk property path. Reverse-engineering the
 //  matching macOS driver shows that, for product IDs 788/789, this sends one byte through hidden

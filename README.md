@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="SiriRemoteForge" width="132" height="132">
+<img src="assets/logo.png" alt="Siri Remote for Vibe Coding" width="132" height="132">
 
-# 🛰️ SiriRemoteForge
+# 🛰️ Siri Remote for Vibe Coding
 
-### Thirteen buttons. However many meanings you want.
+### Your Apple TV Siri Remote, configured for AI coding.
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 &nbsp;![Platform](https://img.shields.io/badge/platform-macOS%2013%2B-lightgrey)
@@ -12,18 +12,33 @@
 &nbsp;![Frameworks](https://img.shields.io/badge/private-MultitouchSupport%20·%20SkyLight-8A2BE2)
 &nbsp;![Distribution](https://img.shields.io/badge/distribution-direct%20beta-blue)
 
-*The Apple TV remote in your drawer already has a compact touch surface and thirteen buttons.*
-*This turns it into a Mac controller where **you** decide what each of them means — and where the*
-*meaning changes with whichever app you happen to be looking at. If you're brave, it can even become*
-*a microphone.*
+*Use the USB-C Siri Remote (3rd generation) as a programmable macOS controller for vibe coding.*
+*Hold a button to talk to your coding app, run shortcuts and macros, and switch between your own layouts.*
 
 </div>
 
 ---
 
-> **TL;DR** — Remap every button, the click-ring, the trackpad, and swipes to any action; make one
-> key mean six things; swap the whole remote with layers; drive the cursor from the touch surface; and
-> reconfigure the entire device by editing **one hot-reloading file**. No settings screen required.
+> **Start in Settings → Layout.** Record shortcuts, build macros, manage app profiles and layers,
+> or disable the touch surface. Changes save automatically; the same configuration can also be
+> edited in `~/.config/siriremote/config.jsonc`.
+
+### Built for vibe coding
+
+- **Instant push-to-talk:** key-down begins when you press Siri; key-up happens when you release it.
+  The hold can last as long as you need. This controls your coding app's own voice feature.
+- **A complete press/release sequence:** optionally switch to an open app, tap an **On Press**
+  shortcut, hold your push-to-talk shortcut, then tap an **On Release** shortcut (such as Enter).
+  Example: switch to Codex → Option+L → hold Control+M → release Control+M → Enter.
+- **Macros:** add/remove keystrokes with **+ / −** and set the delay between each pair.
+- **Your own layouts:** rename/delete layers and app profiles, and use **Copy From** to copy another
+  layer. New layers are independent: unset inputs do nothing. Existing overlay layers retain their
+  inheritance policy until changed.
+- **Optional touch surface:** use pointer movement, scrolling and swipes, or choose **Disabled**.
+- **Native Voice remains available:** the app can also transcribe and deliver text itself. This is
+  separate from a push-to-talk shortcut sent to another app.
+
+### Configuration example
 
 ```jsonc
 // Back button: tap deletes, hold half a second closes the window,
@@ -84,8 +99,7 @@ which also means an agent or a script can reconfigure the whole device by editin
   untouched), and any touch restores them; a HUD confirms the remote connecting and disconnecting;
   shake the cursor to flash a "find my pointer" highlight; animated macOS **Spaces** switching.
 - **Two ways to configure:** hand-edit `~/.config/siriremote/config.jsonc` (hot-reloads on save), or
-  use the built-in **Settings** app — a Tuning tab (sliders) and a Layout tab (a drawn remote + an
-  inline, click-to-edit mapping editor with per-app layers).
+  use the built-in **Settings** app — **Layout**, **Voice**, then **Tuning**.
 
 ---
 
@@ -138,21 +152,21 @@ action.
 
 ## Install a beta build
 
-Published beta builds on the
-[Releases page](https://github.com/HOLODATA-COM/SiriRemoteForge/releases) provide three Apple-silicon
+This fork currently has **no published binary releases**. Build from source below. Future builds on the
+[Releases page](https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases) will provide three Apple-silicon
 downloads:
 
-- **Native Full Installer (recommended)** — open `HyperVibe-Full-Setup-…-arm64.pkg`. The standard
+- **Native Full Installer (recommended)** — open `SiriRemoteVibe-Full-Setup-…-arm64.pkg`. The standard
   macOS Installer places the app, Siri Remote Mic system components, background service and
-  uninstaller with one administrator approval. HyperVibe then opens a live System Check for the
+  uninstaller with one administrator approval. Siri Remote Vibe then opens a live System Check for the
   privacy choices macOS does not let an installer make on the user's behalf.
-- **App only** — unzip `HyperVibe-…-macOS-arm64.zip`, move `HyperVibe.app` to Applications, then
+- **App only** — unzip `SiriRemoteVibe-…-macOS-arm64.zip`, move `Siri Remote for Vibe Coding.app` to Applications, then
   right-click → **Open** once.
 - **Legacy Full Setup** — adds the Siri Remote Mic system components and
-  `HyperVibe Uninstall.app`. It asks for an administrator password, briefly restarts system audio,
+  `Siri Remote Vibe Uninstall.app`. It asks for an administrator password, briefly restarts system audio,
   and runs a 25-second `coreaudiod` safety check with automatic plug-in rollback.
 
-Both require macOS 13+ and are currently arm64-only. Source builds can still be made locally. The
+These packages require macOS 13+ and are currently arm64-only. Source builds can still be made locally. The
 beta archives are ad-hoc signed rather than Apple-notarized because the hardened runtime terminates
 the private MultitouchSupport callback used by the remote trackpad.
 
@@ -161,23 +175,30 @@ the private MultitouchSupport callback used by the remote trackpad.
 ## Build & run
 
 ```sh
-cd app
-./build.sh              # compiles the app + SiriRemoteCore into ./HyperVibe
-./create_app_bundle.sh  # wraps it into HyperVibe.app (icon auto-generated, code-signed)
-open HyperVibe.app
+git clone https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding.git
+cd Siri-Remote-for-Vibe-Coding/app
+./build.sh
+./create_app_bundle.sh
+codesign --verify --deep --strict "Siri Remote for Vibe Coding.app"
+# Quit the existing app before replacing it. Back up an existing installation first.
+ditto "Siri Remote for Vibe Coding.app" "/Applications/Siri Remote for Vibe Coding.app"
+codesign --verify --deep --strict "/Applications/Siri Remote for Vibe Coding.app"
+open "/Applications/Siri Remote for Vibe Coding.app" --args --settings
 ```
 
-`build.sh` produces a bare `./HyperVibe` you can also run directly (`./HyperVibe --settings` opens
-the settings window on launch; `--system-check` opens the live readiness screen).
-`create_app_bundle.sh` packages a double-clickable `HyperVibe.app`.
+The executable is `SiriRemoteVibe`. Run the packaged app from `/Applications` for live use so
+permissions and Start at Login refer to the installed bundle. `--settings` opens Settings;
+`--system-check` opens the readiness screen. When migrating from HyperVibe, quit and back up
+`/Applications/HyperVibe.app` before launching the renamed app; keep only one UI instance running.
+Your existing configuration and Voice data are preserved.
 
 **It's a menu-bar app** (no Dock icon): after launching, click the walkie-talkie icon in the menu bar
 for **Settings… / Quit**. If the menu-bar icon is hidden (e.g. behind the notch), just **double-click
-`HyperVibe.app` again** — that reopens the Settings window.
+`Siri Remote for Vibe Coding.app` again** — that reopens the Settings window.
 
 ### Permissions
 
-macOS gates the low-level access this app needs. On first run HyperVibe opens **System Check**, which
+macOS gates the low-level access this app needs. On first run Siri Remote Vibe opens **System Check**, which
 shows the live state of every required and feature-specific capability. Permission requests happen
 only after the user clicks the matching row; normal startup never sprays unexplained TCC prompts.
 The two core permissions are:
@@ -186,23 +207,24 @@ The two core permissions are:
 - **Input Monitoring** — to receive the remote's buttons over HID. If the buttons don't respond,
   this is almost always why (the log shows `IOHIDManagerOpen failed 0xE00002E2`).
 
-When either permission is granted, HyperVibe automatically reattaches the affected HID/event-tap
+When either permission is granted, Siri Remote Vibe automatically reattaches the affected HID/event-tap
 subsystem; the user does not have to quit or restart the app. The same System Check also reports
 Microphone, Automation, Siri Remote Mic components and PacketLogger, and remains available from the
 menu bar and Settings.
 
 The bundle is signed **without** the hardened runtime on purpose — under the hardened runtime the
 private MultitouchSupport touch callback trips code-signing enforcement and the app is killed the
-instant you touch the trackpad. `create_app_bundle.sh` prefers a stable local self-signed identity
-(`siriRemote Local Signing`) for local builds, so permissions survive rebuilds. It refuses to fall
-back silently; ad-hoc signing is available only when a public Release build requests it explicitly.
+instant you touch the trackpad. `create_app_bundle.sh` defaults to **ad-hoc signing** for local
+builds (`HYPERVIBE_SIGN_MODE=adhoc`). macOS may require Accessibility and Input Monitoring permission
+again after a rebuild. Stable local signing is optional via `HYPERVIBE_SIGN_MODE=stable`; that mode
+fails if the `siriRemote Local Signing` identity is unavailable.
 
 ### Software updates
 
-HyperVibe checks its release feed daily by default. It can download a newer **app-only** archive in
+Siri Remote Vibe checks its release feed daily by default. It can download a newer **app-only** archive in
 the background, or the user can choose **Check for Updates…** from either Settings or the menu bar.
 Sparkle verifies every archive against the Ed25519 public key embedded in the app before extraction.
-The updater replaces only `HyperVibe.app`, so ordinary updates neither restart system audio nor ask
+The updater replaces only `Siri Remote for Vibe Coding.app`, so ordinary updates neither restart system audio nor ask
 for an administrator password. Full Setup remains a separate manual download for installing or
 refreshing the virtual microphone stack.
 
@@ -292,7 +314,7 @@ dedicated uninstaller. Development setup and component-level details live in
 
 ## Native voice-to-text
 
-HyperVibe can also turn a side-button hold directly into text, without asking another dictation app
+Siri Remote Vibe can also turn a side-button hold directly into text, without asking another dictation app
 to interpret a shortcut. No `pushToTalk` mapping is required: enable **Settings → Voice**, save an
 OpenAI key from the in-App credentials panel, then
 hold the Siri button for 0.2 seconds and speak. Capture and the cloud session begin on the physical
@@ -314,7 +336,7 @@ There are two deliberately different output paths:
 
 The side button can choose a different route on every configured Layer. `existing` leaves that
 Layer's ordinary `button.siri` binding completely untouched, while `final` and `streaming` select
-the two native paths above. HyperVibe keeps at most one warm Realtime session per native path—not
+the two native paths above. Siri Remote Vibe keeps at most one warm Realtime session per native path—not
 one per Layer—so even a ten-Layer configuration uses at most two prepared sockets and switching
 Layers does not put a fresh TLS/session handshake on the next press.
 
@@ -332,7 +354,7 @@ dictionary accepts canonical terms plus recognition aliases and works in both mo
 
 When editable text is already selected, Voice becomes a selection editor: hold Side, speak the
 transformation, and release to replace the selection once. This route is deliberately Accessibility-
-only. HyperVibe never simulates Copy to discover the selection and never inserts the spoken
+only. Siri Remote Vibe never simulates Copy to discover the selection and never inserts the spoken
 instruction. Editable selections are replaced in place. Readable terminal/scrollback selections can
 still be rewritten, but their result is clipboard-only; any failed replacement likewise copies the
 completed rewrite while leaving the source untouched. It works with both Final and Live
@@ -344,7 +366,7 @@ transcript. Switching Voice mode itself is silent. The persistent widget uses th
 meter in Final and Streaming, with an adaptive per-hold level reference so changing microphone sources does not arbitrarily
 make the waveform huge or tiny. Both the cue and its volume are configurable.
 
-API keys are entered only through HyperVibe Settings and never enter the shareable `config.jsonc`,
+API keys are entered only through Siri Remote Vibe Settings and never enter the shareable `config.jsonc`,
 logs, the App bundle, or Git. Certificate-bound builds keep them in the login Keychain through a
 fixed credential helper. Public ad-hoc betas instead keep them as plaintext in a dedicated
 `~/Library/Application Support/HyperVibe/Credentials/credentials.json` file with mode `0600` inside
@@ -375,7 +397,7 @@ the signed-in user. Every non-secret behavior remains JSON-controlled under `set
   "minimumRecordingSeconds": 1,   // shorter turns stay local and produce no text
   "maxRecordingSeconds": 120,
   "dictionary": [
-    { "term": "HyperVibe", "aliases": ["hyper vibe", "Hyper Vibe"] }
+    { "term": "Siri Remote Vibe", "aliases": ["hyper vibe", "Hyper Vibe"] }
   ]
 }
 ```
@@ -581,7 +603,7 @@ mapping backwards—without a circular nucleus, background colour dot, `Complete
 page motion. All analysis runs off the real-time audio callback and changes display only.
 Layer actions skip the redundant
 “Next Layer” face and show only the actual destination Layer. The panel is non-activating, stays above apps
-across normal and full-screen Spaces, and is draggable over its entire surface. HyperVibe stores the
+across normal and full-screen Spaces, and is draggable over its entire surface. Siri Remote Vibe stores the
 physical display plus a normalized position. If that display is disconnected, the card moves to an
 available screen and adopts that as its new saved home instead of being stranded off-screen.
 Layer-to-layer changes use one continuous vertical wheel: the old face rolls upward around the
@@ -651,6 +673,14 @@ that **opens** an app (`launch`, or `shell` written as `open -a "Some App"`) alw
 installed app's real icon automatically. An action **aimed at** an app (`applescript` containing
 `tell application "X"`) still uses a configured `icon` when present; otherwise it can use that app's
 icon beside the action label.
+
+**Independent layers and copying:** Layout → Manage Layers lets you turn off “Inherit
+unassigned inputs from Main”. With it off, missing bindings do nothing, including native touch,
+center click and intercepted media keys. Base layer switching actions remain reachable. New layers
+start independent; existing configs without `inheritsBaseBindings` keep their legacy overlay behavior.
+Layout → select the target layer → Copy From… takes a snapshot of the source's effective mappings
+across app profiles, replacing the target mappings and copying hold timing and labels/icons.
+Layer names/settings are preserved. Subsequent source edits do not change the copy.
 
 **Presentation inherits down the mode chain on its own, field by field, independently of the
 binding.** A key keeps its identity even where a mode re-binds it, so set `label`/`icon` once in
@@ -779,28 +809,33 @@ and sizes (which depend on a particular display), and the fact that this Mac com
   off the main thread); the interface map comes straight from `IOHIDManager`.
 - **Tuning** — grouped sliders for cursor feel, acceleration, click, circular scroll, and button
   timing, each applying live. Ends with **Startup → Start at login**, which registers the app with
-  `SMAppService` (macOS 13+). Registration is by bundle, so it follows `HyperVibe.app` and survives
+  `SMAppService` (macOS 13+). Registration is by bundle, so it follows `Siri Remote for Vibe Coding.app` and survives
   rebuilds in place; it also appears under **System Settings → General → Login Items**, so it can be
   turned off there even when the app isn't running. The toggle always re-reads the real
   registration, so it can't sit in a position macOS didn't accept — if macOS wants approval, the
-  footer says so. Scriptable with `open HyperVibe.app --args --enable-login-item` (or
+  footer says so. Scriptable with `open "/Applications/Siri Remote for Vibe Coding.app" --args --enable-login-item` (or
   `--disable-login-item`).
 - **Layout** — "what every button does": a drawn aluminum remote on the left (click a button to jump
   to its mapping; the selected input stays highlighted), an **app hub** to pick the mode, an
   **Editing: base / layer** selector (the layer × app grid), and a grouped input→action list with
   Custom / Inherited / System tags. Click any input to open a docked editor for its
   Tap / Double-tap / Hold·· / Hold··· slots, written straight to `config.jsonc`. Keystroke,
-  Push-to-talk, and Repeat Key actions have a native recorder: click it and press the real keyboard
+  Macro, Push-to-talk, and Repeat Key actions have a native recorder: click it and press the real keyboard
   combination. It records left/right modifiers, standalone modifier chords, **Fn**, and F1–F20;
   Escape cancels and an unmodified Delete clears. The pencil button keeps advanced text entry
   available for pasting or hand-authoring a chord.
+  **Manage Layers…** renames layer display names and deletes optional layers, including presets.
+  The base layer can be renamed and is always retained. Deleting a layer also cleans up its
+  per-app overrides and shortcuts that select it. **Manage Apps…** changes each app's profile or
+  removes it; shared profiles survive until their last app is removed, and profiles used as layers
+  are retained. Unused profiles can be deleted separately. Changes save and apply immediately.
 
 ---
 
 ## Repository layout
 
 ```
-SiriRemoteForge/
+Siri-Remote-for-Vibe-Coding/
 ├── SiriRemoteCore/        # pure engine (SwiftPM package) — config model, resolution, write-back, tests
 │   ├── Sources/SiriRemoteCore/
 │   └── Tests/SiriRemoteCoreTests/     # `swift test`  (config round-trip, resolution, layers, …)
@@ -810,7 +845,7 @@ SiriRemoteForge/
 │   ├── create_app_bundle.sh
 │   ├── tools/make_app_icon.swift
 │   ├── SiriRemote-Bridging-Header.h / MultitouchSupport.h
-│   └── HyperVibe.entitlements
+│   └── SiriRemoteVibe.entitlements
 ├── mic/                   # virtual microphone (see the Microphone section)
 │   ├── driver/            # CoreAudio HAL plug-in ("Siri Remote Mic"), a hardened BlackHole fork
 │   ├── router/            # srm_router — decode BLE voice notifications → shared-memory ring
@@ -824,8 +859,11 @@ SiriRemoteForge/
     └── build-host.sh      # embeds DEXT; does not launch or activate
 ```
 
-The app target is named `HyperVibe` internally (historical, from the fork below); the product is
-"siriRemote".
+The product is **Siri Remote for Vibe Coding**, with **Siri Remote Vibe** used in compact UI and
+`SiriRemoteVibe` as its executable and release-file prefix. For compatibility with existing installs,
+`com.hypervibe.app`, the credential broker, Keychain services, `HYPERVIBE_*` build overrides,
+`~/Library/Application Support/HyperVibe`, and `~/.config/siriremote` keep their existing identifiers.
+Historical release notes and upstream copyright notices retain the original names.
 
 ## Development
 
@@ -859,7 +897,7 @@ capabilities. It is superseded by `mic/` and kept only for reference.
 
 Development invariant: a diagnostic instance temporarily replaces the normal app; it does not run
 alongside it. After every diagnostic, stop the flagged process and restore exactly one no-argument
-`HyperVibe.app` instance so remote control remains available.
+`Siri Remote for Vibe Coding.app` instance so remote control remains available.
 
 ## Hardware notes (3rd-gen Siri Remote)
 
@@ -879,10 +917,11 @@ including what is unfinished and which ideas were tried and rejected (and why).
 
 ## Credits & license
 
-SiriRemoteForge is licensed under the **GNU General Public License v3.0 or later**. See
+Siri Remote for Vibe Coding is licensed under the **GNU General Public License v3.0 or later**. See
 [`LICENSE`](LICENSE) for the full text.
 
-It began as a fork of **hypervibe** (MIT, © 2026 Jinsoo An). Its native layer — HID device seizing,
+This project is a fork of [SiriRemoteForge](https://github.com/HOLODATA-COM/SiriRemoteForge),
+which began as a fork of **hypervibe** (MIT, © 2026 Jinsoo An). Its native layer — HID device seizing,
 the MultitouchSupport bridge, media-key synthesis, and the menu-bar scaffolding — was kept; the
 hard-coded mappings were replaced by the config-driven engine here, and the gesture, layer, hold,
 cursor, and settings layers were substantially rewritten.
@@ -896,11 +935,6 @@ third-party notices ship inside every app bundle as `Sparkle-LICENSE.txt`.
 
 ## Star history
 
-<p align="center">
-  <a href="https://github.com/HOLODATA-COM/SiriRemoteForge/stargazers">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HOLODATA-COM/SiriRemoteForge/star-history/assets/star-history-dark.svg">
-      <img src="https://raw.githubusercontent.com/HOLODATA-COM/SiriRemoteForge/star-history/assets/star-history.svg" width="800" alt="SiriRemoteForge GitHub star history">
-    </picture>
-  </a>
-</p>
+[View this repository’s star history](https://star-history.com/#doer-ee/Siri-Remote-for-Vibe-Coding&Date).
+
+The included Star History workflow can also generate chart assets on the `star-history` branch.

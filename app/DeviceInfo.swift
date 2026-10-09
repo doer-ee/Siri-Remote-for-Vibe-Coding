@@ -1,6 +1,6 @@
 //
 //  DeviceInfo.swift
-//  HyperVibe (settings UI)
+//  Siri Remote Vibe (settings UI)
 //
 //  Everything macOS will tell us about the paired remote: battery, firmware, address and the
 //  HID interface map. Battery/firmware/address come from `system_profiler -json SPBluetoothDataType`

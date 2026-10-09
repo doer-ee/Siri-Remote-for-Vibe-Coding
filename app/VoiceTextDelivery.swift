@@ -1,6 +1,6 @@
 //
 //  VoiceTextDelivery.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Captures the user's real text target before the non-activating Voice HUD appears, then delivers
 //  text without stealing focus. Final mode starts with a guarded Command-V transaction because
@@ -221,7 +221,7 @@ struct VoicePasteboardSnapshot {
 
 /// Cross-process Accessibility calls are synchronous Mach IPC and can stall even with a messaging
 /// timeout. Keep every dynamic focus/security check and AX write on one ordered worker so a slow
-/// editor cannot freeze the HUD or the rest of HyperVibe's main run loop.
+/// editor cannot freeze the HUD or the rest of Siri Remote Vibe's main run loop.
 private final class VoiceTextDeliveryWorker: @unchecked Sendable {
     private static let pasteKeyCode: CGKeyCode = 9
     private static let copyKeyCode: CGKeyCode = 8

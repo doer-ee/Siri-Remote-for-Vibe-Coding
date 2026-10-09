@@ -1,6 +1,6 @@
 //
 //  RemoteView.swift
-//  HyperVibe (settings UI — Layout tab)
+//  Siri Remote Vibe (settings UI — Layout tab)
 //
 //  A drawn 3rd-gen aluminum Siri Remote in pure SwiftUI. Reusable: bind `highlightedKey`
 //  to a control-identifier string (e.g. "button.back", "ring.up", "touch", "select") and the

@@ -1,10 +1,10 @@
 //
 //  VoiceOrbHUD.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  The current native-Voice presentation: one audio-reactive dotted orb and one short state word.
 //  Its motion language is inspired by thinking-orbs (MIT, Jakub Antalik), but this is a native
-//  AppKit/Core Graphics renderer built around HyperVibe's existing acoustic meter and lifecycle.
+//  AppKit/Core Graphics renderer built around Siri Remote Vibe's existing acoustic meter and lifecycle.
 //
 //  The previous rectangular/CRT implementation remains intact in VoicePipelineHUD.swift as
 //  LegacyVoicePipelineHUDController. Keeping both implementations compiled makes visual A/B work

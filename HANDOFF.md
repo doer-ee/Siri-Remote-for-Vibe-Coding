@@ -1,34 +1,36 @@
-# SiriRemoteForge — living handoff
+# Siri Remote for Vibe Coding — living handoff
 
-Last updated: 2026-09-02 (Australia/Sydney)
+## Current fork state — 2026-10-09
 
-This document is the concise source of truth for continuing development. Keep it updated whenever
-the architecture, user-facing mappings, build/run workflow, or microphone investigation changes.
-The detailed product and configuration reference remains in `README.md`; microphone experiments
-belong in `docs/mic-reverse-engineering.md`.
+- Canonical repo: `https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding`, branch `main`.
+- Full product name: **Siri Remote for Vibe Coding**; compact UI: **Siri Remote Vibe**.
+- Executable: `SiriRemoteVibe`; installed bundle: `/Applications/Siri Remote for Vibe Coding.app`.
+- Follow `AGENTS.md`: local ad-hoc signing is explicitly authorized and is the default. Verify
+  signatures before and after installation, then leave exactly one installed UI instance running.
+- Preserve `com.hypervibe.app`, credential broker identity, Keychain/data paths, config directory and
+  `HYPERVIBE_*` build overrides. These are compatibility identifiers, not the displayed product name.
+- The fork has no published releases. Its appcast is empty until a signed release is published;
+  inherited upstream release notes below describe historical upstream artifacts.
+- Current features include instant held shortcuts with app switch / On Press / On Release, macros,
+  touch disable, editable layers/apps, independent new layers and Copy From. Voice is retained.
+- Latest UI order is Layout → Voice → Tuning. Manage Layers is beside Manage Apps; Copy From follows
+  the Editing label. The held-modifier event tap keeps Ctrl down while the physical mouse moves.
 
-## Repository and runtime state
+### Rename verification
 
-### Non-negotiable local App deployment invariant
+- Optimized arm64 App build and ad-hoc bundle verification passed.
+- SiriRemoteCore: **146/146**; packaged Voice self-check: **122/122**.
+- Offline held-modifier checks, shell syntax, installer AppleScript compilation, package path and
+  updater metadata checks passed. Long product name verified visually in Settings.
+- Installed main App and renamed uninstaller; old bundles retained as local backups. User config
+  remains byte-identical. Login registration reports enabled; only one installed UI process runs.
+- macOS privacy permissions were restored with the user completing system authentication.
+- Public binary releases were not created. Website screenshots/videos remain historical examples.
 
-- Every compiled and packaged user-test build must be installed as
-  `/Applications/HyperVibe.app`. Do not run the workspace copy at `app/HyperVibe.app` as the live
-  App.
-- Local builds must preserve the existing stable `siriRemote Local Signing` identity. Verify that
-  signature before replacing the installed App; if it is missing or invalid, stop. Never silently
-  fall back to ad-hoc signing, because its changing code identity makes macOS request Accessibility,
-  Input Monitoring, Microphone, and Automation permissions again.
-- Restart only after the installed bundle passes signature verification, then verify there is one UI
-  process and that it runs from `/Applications/HyperVibe.app/Contents/MacOS/HyperVibe`.
-- These rules are also recorded in the repository-root `AGENTS.md` so future coding sessions inherit
-  them before changing or deploying the App.
+## Historical upstream handoff
 
-- Canonical repository: `https://github.com/HOLODATA-COM/SiriRemoteForge`, branch `main`.
-  **GPL-3.0-or-later** as of 2026-07-22, going public; the paid-release plan was dropped. Upstream's
-  MIT notice is retained in `NOTICE` — see the licensing note at the end for why that is mandatory.
-- Local checkout: the repository root (`siriremote-release`).
-- Current branch: `main`. Use `git rev-parse HEAD` for the exact current commit; this living document
-  no longer pins a SHA that becomes stale after every deployment note.
+The following entries are an archive. Their paths, repository links and signing policies describe
+past upstream work; current instructions above and `AGENTS.md` supersede them.
 
 ### ⚡ LATEST — 2026-09-02: beta.8 published + authenticated update path verified
 

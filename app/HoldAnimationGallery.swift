@@ -1,6 +1,6 @@
 //
 //  HoldAnimationGallery.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  A no-input visual design lab for comparing nine complete long-press motion languages. Launch
 //  with `--preview-hold-animations`; it never starts HID discovery, suspends rcd, or changes the
@@ -33,7 +33,7 @@ final class HoldAnimationGalleryController: NSObject, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "HyperVibe · Hold Interaction Lab"
+        window.title = "Siri Remote Vibe · Hold Interaction Lab"
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.standardWindowButton(.closeButton)?.isHidden = true

@@ -1,8 +1,8 @@
 //
 //  ActionSymbolStyle.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
-//  One semantic vocabulary for every action symbol shown by HyperVibe. The persistent widget,
+//  One semantic vocabulary for every action symbol shown by Siri Remote Vibe. The persistent widget,
 //  the large hold HUD and the transient Layer/connection HUD must not independently decide that
 //  the same action is blue in one place, white in another and animated as something unrelated in
 //  a third. This file is the single source of truth for colour, authored SF Symbol layers and

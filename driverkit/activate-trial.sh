@@ -10,7 +10,7 @@
 # What it does (all reversible):
 #   1. snapshot the current interface-5 owner (AppleEmbeddedBluetoothAudio);
 #   2. copy the signed host bundle to /Applications (parent-bundle-location rule);
-#   3. stop the single normal HyperVibe instance and verify its HID client is gone;
+#   3. stop the single normal Siri Remote Vibe instance and verify its HID client is gone;
 #   4. launch the installed host with --activate (submits OSSystemExtensionRequest).
 #
 # After running: approve in System Settings > General > Login Items & Extensions >
@@ -24,7 +24,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BUILT_HOST="$REPO_ROOT/.build/driverkit/Products/Debug/SiriRemoteMicHost.app"
 INSTALLED_HOST="/Applications/SiriRemoteMicHost.app"
-HYPERVIBE="$REPO_ROOT/app/HyperVibe.app"
+HYPERVIBE="/Applications/Siri Remote for Vibe Coding.app"
 
 echo "== 0. baseline: current interface-5 owner =="
 ioreg -c AppleEmbeddedBluetoothAudio -r -d 1 2>/dev/null \
@@ -43,15 +43,15 @@ ditto "$BUILT_HOST" "$INSTALLED_HOST"
 codesign --verify --deep --strict "$INSTALLED_HOST" && echo "  installed + signature OK: $INSTALLED_HOST"
 
 echo
-echo "== 2. stop the single normal HyperVibe instance (trial invariant) =="
-if pgrep -f "HyperVibe.app/Contents/MacOS/HyperVibe" >/dev/null; then
-  pkill -f "HyperVibe.app/Contents/MacOS/HyperVibe" || true
+echo "== 2. stop the single normal Siri Remote Vibe instance (trial invariant) =="
+if pgrep -f "Siri Remote for Vibe Coding.app/Contents/MacOS/SiriRemoteVibe" >/dev/null; then
+  pkill -f "Siri Remote for Vibe Coding.app/Contents/MacOS/SiriRemoteVibe" || true
   sleep 1
 fi
-if pgrep -f "HyperVibe.app/Contents/MacOS/HyperVibe" >/dev/null; then
-  echo "  WARNING: HyperVibe still running; stop it before trusting the trial."
+if pgrep -f "Siri Remote for Vibe Coding.app/Contents/MacOS/SiriRemoteVibe" >/dev/null; then
+  echo "  WARNING: Siri Remote Vibe still running; stop it before trusting the trial."
 else
-  echo "  HyperVibe stopped."
+  echo "  Siri Remote Vibe stopped."
 fi
 
 echo

@@ -1,6 +1,6 @@
 //
 //  CursorHighlighter.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  "Find my cursor" highlight. macOS's native shake-to-locate only reacts to real HID cursor
 //  motion, not our synthesized CGEvent moves, so we draw our own: a borderless click-through

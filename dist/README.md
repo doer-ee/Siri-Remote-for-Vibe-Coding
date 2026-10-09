@@ -2,14 +2,14 @@
 
 The release builder creates three Apple-silicon macOS downloads from a clean checkout:
 
-- **`HyperVibe-Full-Setup-VERSION-arm64.pkg`** — the primary native macOS Installer. It installs
+- **`SiriRemoteVibe-Full-Setup-VERSION-arm64.pkg`** — the primary native macOS Installer. It installs
   the app, virtual microphone, router, on-demand capture service, and uninstaller with one
-  administrator approval. HyperVibe then opens its live System Check for the privacy permissions
+  administrator approval. Siri Remote Vibe then opens its live System Check for the privacy permissions
   macOS deliberately keeps under the user's control.
 
-- **`HyperVibe-VERSION-macOS-arm64.zip`** — the menu-bar app only. Unzip, move
-  `HyperVibe.app` to Applications, then right-click it and choose **Open** the first time.
-- **`HyperVibe-Full-Setup-VERSION-arm64.zip`** — the app plus the Siri Remote Mic HAL plug-in,
+- **`SiriRemoteVibe-VERSION-macOS-arm64.zip`** — the menu-bar app only. Unzip, move
+  `Siri Remote for Vibe Coding.app` to Applications, then right-click it and choose **Open** the first time.
+- **`SiriRemoteVibe-Full-Setup-VERSION-arm64.zip`** — the app plus the Siri Remote Mic HAL plug-in,
   router, capture daemon, and an uninstaller. This is the advanced option because it installs
   system audio and Bluetooth-capture components with an administrator password.
 
@@ -33,9 +33,9 @@ offline tests, and writes:
 
 ```text
 dist/build/0.1.0-beta.1/
-├── HyperVibe-0.1.0-beta.1-macOS-arm64.zip
-├── HyperVibe-Full-Setup-0.1.0-beta.1-arm64.zip
-├── HyperVibe-Full-Setup-0.1.0-beta.1-arm64.pkg
+├── SiriRemoteVibe-0.1.0-beta.1-macOS-arm64.zip
+├── SiriRemoteVibe-Full-Setup-0.1.0-beta.1-arm64.zip
+├── SiriRemoteVibe-Full-Setup-0.1.0-beta.1-arm64.pkg
 └── SHA256SUMS.txt
 ```
 
@@ -45,16 +45,16 @@ Upload only the four audited files above, never the whole `dist/build/` director
 archives and fails on invalid signatures/checksums, wrong versions or architectures, Homebrew
 runtime links, missing license notices, private paths, author config, PacketLogger, or video files.
 The libopus source archive and build output are cached under ignored `dist/build/` paths.
-The builder never rewrites `app/HyperVibe.app`, so a locally running, stable-signed development App
+The builder never rewrites `app/Siri Remote for Vibe Coding.app`, so the installed local development App
 and its macOS privacy grants are left untouched.
 
-The final step also updates and signs the repository-root `appcast.xml`. HyperVibe checks that feed
+The final step also updates and signs the repository-root `appcast.xml`. Siri Remote Vibe checks that feed
 daily and can download the app-only ZIP in the background. Every archive is authenticated with
 Sparkle Ed25519 before extraction; published feeds receive an additional whole-feed signature.
 The private key remains in the maintainer's login Keychain and must never be committed. Back it up
 to encrypted offline storage with Sparkle's
 `generate_keys -x`, and import it on a replacement release machine with `generate_keys -f`.
-Automatic updates replace only `HyperVibe.app`, so they do not restart system audio or request an
+Automatic updates replace only `Siri Remote for Vibe Coding.app`, so they do not restart system audio or request an
 administrator password. Full Setup remains a separate, explicitly selected download when users want
 to install or refresh the virtual microphone and its privileged services.
 
@@ -66,7 +66,7 @@ before changing the system.
 
 The Full Setup installer:
 
-1. installs the app and `HyperVibe Uninstall.app`;
+1. installs the app and `Siri Remote Vibe Uninstall.app`;
 2. preserves the pre-existing Bluetooth `HCITraces` preference;
 3. installs the HAL plug-in and restarts `coreaudiod`;
 4. monitors `coreaudiod` for 25 seconds and restores the previous plug-in if CPU remains at or above

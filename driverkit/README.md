@@ -1,7 +1,7 @@
 # Siri Remote microphone DriverKit proof of concept
 
 This directory contains a local HIDDriverKit replacement experiment and its separate macOS host.
-They stay isolated from HyperVibe because the normal app uses a different signing/runtime model and
+They stay isolated from Siri Remote Vibe because the normal app uses a different signing/runtime model and
 must keep its existing Accessibility and Input Monitoring grants.
 
 ## Current result
@@ -61,7 +61,7 @@ cd driverkit
 `build-host.sh` first builds the DEXT, then compiles the host and embeds the extension at
 `Contents/Library/SystemExtensions/com.hypervibe.SiriRemoteMicDriver.dext`. It writes only beneath
 the repository's ignored `.build/` directory. Neither script launches the host, installs a system
-extension, changes SIP, restarts Bluetooth, changes pairing, or stops HyperVibe.
+extension, changes SIP, restarts Bluetooth, changes pairing, or stops Siri Remote Vibe.
 
 With one argument, the signing script performs structural development signing without a profile.
 With three arguments, it validates and embeds the supplied host and DEXT profiles before signing
@@ -108,7 +108,7 @@ After both profiles are available, the first test should remain narrow and rever
 
 1. rebuild, embed both eligible profiles while signing, verify both hardened-runtime signatures,
    and copy the complete host to `/Applications`;
-2. temporarily stop the one normal HyperVibe process and verify that its interface-5 HID client is
+2. temporarily stop the one normal Siri Remote Vibe process and verify that its interface-5 HID client is
    gone;
 3. submit activation from the installed host and, if requested, approve it in **System Settings →
    General → Login Items & Extensions → Drivers**;
@@ -121,7 +121,7 @@ After both profiles are available, the first test should remain narrow and rever
    is protocol evidence; macOS rewrites this interface's local ID to `0xFF`, so a literal `0xFA`
    must not be required;
 7. request deactivation, allowing for a deferred/reboot result, verify restoration of
-   `AppleEmbeddedBluetoothAudio`, and restore exactly one no-argument HyperVibe instance.
+   `AppleEmbeddedBluetoothAudio`, and restore exactly one no-argument Siri Remote Vibe instance.
 
 Do not add Opus decoding or a virtual CoreAudio device until a genuine varying microphone payload
 has been captured.

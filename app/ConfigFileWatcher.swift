@@ -1,6 +1,6 @@
 //
 //  ConfigFileWatcher.swift
-//  HyperVibe (config engine integration)
+//  Siri Remote Vibe (config engine integration)
 //
 //  Watches the config file and fires onChange when it is written/replaced, so the
 //  engine can hot-reload. Re-arms after atomic saves (rename/delete).

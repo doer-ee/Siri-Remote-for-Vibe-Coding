@@ -1,6 +1,6 @@
 //
 //  AccelCurveView.swift
-//  HyperVibe (settings UI)
+//  Siri Remote Vibe (settings UI)
 //
 //  Interactive editor for the velocity-to-gain curve. The maths mirrors TouchHandler exactly:
 //  a smoothstep ramp between two speed thresholds, raised to `curve`, then mapped from the slow

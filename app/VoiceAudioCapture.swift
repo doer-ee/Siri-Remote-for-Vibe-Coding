@@ -1,8 +1,8 @@
 //
 //  VoiceAudioCapture.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
-//  A non-real-time reader over HyperVibe's two existing 48 kHz audio rings. It probes briefly for
+//  A non-real-time reader over Siri Remote Vibe's two existing 48 kHz audio rings. It probes briefly for
 //  live Siri Remote audio, otherwise locks the utterance to the pinned built-in microphone. Locking
 //  one source per utterance avoids a mid-sentence timbre jump and makes streamed PCM deterministic.
 //
@@ -80,7 +80,7 @@ final class VoiceAudioCaptureSession: @unchecked Sendable {
     private var announcedMinimumDuration = false
     /// The begin cue is played by the Mac while capture is already hot. A tiny lock-protected
     /// monotonic deadline lets the audio queue consume—but not publish—those acoustic frames, so
-    /// neither Realtime nor the Final WAV can transcribe HyperVibe's own acknowledgement.
+    /// neither Realtime nor the Final WAV can transcribe Siri Remote Vibe's own acknowledgement.
     private let exclusionLock = NSLock()
     private var excludeUntilNanoseconds: UInt64 = 0
 

@@ -1,6 +1,6 @@
 //
 //  ActionVisual.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Turns a binding into something showable: a short label and an icon. Used by the hold-progress
 //  HUD, where "what will run if I let go now" has to be readable at a glance.

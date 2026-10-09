@@ -1,6 +1,6 @@
 //
 //  VoiceTranscriptionClient.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  OpenAI's two intentionally separate speech paths:
 //    - bounded/final: gpt-transcribe over /v1/audio/transcriptions
@@ -64,7 +64,7 @@ final class VoiceTranscriptionClient {
             throw VoiceTranscriptionError.invalidAudio
         }
 
-        let boundary = "HyperVibe-\(UUID().uuidString)"
+        let boundary = "Siri Remote Vibe-\(UUID().uuidString)"
         var body = MultipartBody(boundary: boundary)
         body.addField(name: "model", value: model)
         body.addField(name: "response_format", value: "json")

@@ -1,6 +1,6 @@
 //
 //  FocusFollowsCursor.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Focus the app the cursor is over, so a keystroke binding lands where you are pointing rather
 //  than wherever you last clicked. Scrolling a browser on another display and then pressing a

@@ -1,10 +1,10 @@
 //
 //  StatusWidget.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Optional, always-on status surface. It rests on the current layer, springs briefly to the
 //  action/app that just became active, then settles back to the layer. The panel never activates
-//  HyperVibe, joins every Space (including full-screen Spaces), and remembers a display-relative
+//  Siri Remote Vibe, joins every Space (including full-screen Spaces), and remembers a display-relative
 //  drag position so monitor rearrangements and resolution changes do not strand it off-screen.
 //
 
@@ -926,7 +926,7 @@ final class StatusWidgetController: NSObject, NSWindowDelegate {
         }
     }
 
-    /// Keep HyperVibe's own start cue out of the real-audio visualization. Resetting the adaptive
+    /// Keep Siri Remote Vibe's own start cue out of the real-audio visualization. Resetting the adaptive
     /// reference here also prevents that short chirp from compressing the user's next few words.
     func suppressVoiceMeter(for duration: TimeInterval) {
         onMain { [weak self] in
@@ -5129,7 +5129,7 @@ final class StatusWidgetController: NSObject, NSWindowDelegate {
     private func activeSpaceChanged() {
         guard enabled, isConnected else { return }
         // macOS may drop an already-ordered auxiliary panel during a full-screen Space transition.
-        // Re-ordering is idempotent and does not activate HyperVibe.
+        // Re-ordering is idempotent and does not activate Siri Remote Vibe.
         ensureReachable()
         surface.panel.orderFrontRegardless()
     }

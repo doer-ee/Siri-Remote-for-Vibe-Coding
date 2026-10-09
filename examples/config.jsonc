@@ -3,7 +3,7 @@
 // See the README for the full event-key / action / layer reference.
 //
 {
-  // siriRemote config — edit and save; changes hot-reload live.
+  // Siri Remote Vibe config — edit and save; changes hot-reload live.
   // Event keys: ring.up ring.down ring.left ring.right
   //             button.menu button.tv button.siri button.playPause
   //             button.volumeUp button.volumeDown button.back
@@ -98,7 +98,7 @@
       "minimumRecordingSeconds": 1, // shorter turns stay local and are discarded without output
       "maxRecordingSeconds": 120,
       "dictionary": [
-        { "term": "HyperVibe", "aliases": ["hyper vibe", "Hyper Vibe"] },
+        { "term": "Siri Remote Vibe", "aliases": ["siri remote vibe"] },
         { "term": "hypergraph", "aliases": ["hyper graph"] },
         { "term": "skill", "aliases": [] },
         { "term": "layer", "aliases": [] },

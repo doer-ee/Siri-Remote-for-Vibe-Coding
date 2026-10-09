@@ -4,13 +4,14 @@
 
 set -e
 
-APP_NAME="HyperVibe"
-APP_BUNDLE="${HYPERVIBE_APP_BUNDLE_PATH:-${APP_NAME}.app}"
+APP_NAME="SiriRemoteVibe"
+APP_DISPLAY_NAME="Siri Remote for Vibe Coding"
+APP_BUNDLE="${HYPERVIBE_APP_BUNDLE_PATH:-${APP_DISPLAY_NAME}.app}"
 BINARY_PATH="${HYPERVIBE_BINARY_PATH:-$APP_NAME}"
 APP_VERSION="${HYPERVIBE_VERSION:-1.0.0}"
 BUILD_NUMBER="${HYPERVIBE_BUILD_NUMBER:-1}"
 RELEASE_VERSION="${HYPERVIBE_RELEASE_VERSION:-${APP_VERSION}-local.${BUILD_NUMBER}}"
-SIGN_MODE="${HYPERVIBE_SIGN_MODE:-stable}"
+SIGN_MODE="${HYPERVIBE_SIGN_MODE:-adhoc}"
 SPARKLE_ROOT="$(./prepare_sparkle.sh)"
 
 if ! [[ "$APP_VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}$ ]]; then
@@ -54,11 +55,11 @@ cp "HyperVibeCredentialBroker" \
 /bin/cp "$SPARKLE_ROOT/LICENSE" "${APP_BUNDLE}/Contents/Resources/Sparkle-LICENSE.txt"
 
 # Generate the app icon if it's missing (it's a build artifact — .icns is git-ignored).
-if [ ! -f "HyperVibe.icns" ] && [ -f "tools/make_app_icon.swift" ]; then
+if [ ! -f "SiriRemoteVibe.icns" ] && [ -f "tools/make_app_icon.swift" ]; then
     echo "Generating app icon..."
-    TMP_ICONSET="$(mktemp -d)/HyperVibe.iconset"
+    TMP_ICONSET="$(mktemp -d)/SiriRemoteVibe.iconset"
     if swift tools/make_app_icon.swift "$TMP_ICONSET" >/dev/null 2>&1 \
-        && iconutil -c icns "$TMP_ICONSET" -o "HyperVibe.icns" 2>/dev/null; then
+        && iconutil -c icns "$TMP_ICONSET" -o "SiriRemoteVibe.icns" 2>/dev/null; then
         echo "App icon generated"
     else
         echo "Icon generation skipped (swift/iconutil unavailable)"
@@ -66,11 +67,11 @@ if [ ! -f "HyperVibe.icns" ] && [ -f "tools/make_app_icon.swift" ]; then
 fi
 
 # Copy icon if it exists
-if [ -f "HyperVibe.icns" ]; then
-    cp "HyperVibe.icns" "${APP_BUNDLE}/Contents/Resources/HyperVibe.icns"
+if [ -f "SiriRemoteVibe.icns" ]; then
+    cp "SiriRemoteVibe.icns" "${APP_BUNDLE}/Contents/Resources/SiriRemoteVibe.icns"
     echo "Icon added to app bundle"
 elif [ -f "SiriRemote.icns" ]; then
-    cp "SiriRemote.icns" "${APP_BUNDLE}/Contents/Resources/HyperVibe.icns"
+    cp "SiriRemote.icns" "${APP_BUNDLE}/Contents/Resources/SiriRemoteVibe.icns"
     echo "Icon added to app bundle"
 fi
 
@@ -103,7 +104,9 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" <<EOF
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>$APP_NAME</string>
+	<string>$APP_DISPLAY_NAME</string>
+	<key>CFBundleDisplayName</key>
+	<string>$APP_DISPLAY_NAME</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleVersion</key>
@@ -113,9 +116,9 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" <<EOF
 	<key>HyperVibeReleaseVersion</key>
 	<string>$RELEASE_VERSION</string>
 	<key>CFBundleIconFile</key>
-	<string>HyperVibe</string>
+	<string>SiriRemoteVibe</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2026 HyperVibe Contributors</string>
+	<string>Copyright © 2026 Siri Remote for Vibe Coding Contributors</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>13.0</string>
 	<!-- Login Items and a manual reopen must converge on the same running process. Without this,
@@ -127,17 +130,17 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" <<EOF
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>HyperVibe needs Bluetooth access to connect to your Siri Remote trackpad.</string>
+	<string>Siri Remote Vibe needs Bluetooth access to connect to your Siri Remote trackpad.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>HyperVibe needs Bluetooth access to connect to your Siri Remote trackpad.</string>
+	<string>Siri Remote Vibe needs Bluetooth access to connect to your Siri Remote trackpad.</string>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>siriRemote sends AppleScript to apps you bind (e.g. play/pause Apple Music) when the remote's buttons are pressed.</string>
+	<string>Siri Remote Vibe sends AppleScript to apps you bind (e.g. play/pause Apple Music) when the remote's buttons are pressed.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>HyperVibe uses your selected microphone for push-to-talk dictation, transcription, and its live waveform.</string>
+	<string>Siri Remote Vibe uses your selected microphone for push-to-talk dictation, transcription, and its live waveform.</string>
 	<!-- Sparkle update policy. Runtime choices are mirrored from config.jsonc; these values provide
 	     secure first-launch defaults before that config has been migrated by the GUI. -->
 	<key>SUFeedURL</key>
-	<string>https://raw.githubusercontent.com/HOLODATA-COM/SiriRemoteForge/main/appcast.xml</string>
+	<string>https://raw.githubusercontent.com/doer-ee/Siri-Remote-for-Vibe-Coding/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>soFRqtCkorMRWAPsLRxn3ZE7vaihfpjYFH+4kXmc/Hk=</string>
 	<key>SUEnableAutomaticChecks</key>
@@ -206,23 +209,23 @@ chmod +x "${APP_BUNDLE}/Contents/XPCServices/HyperVibeCredentialBroker.xpc/Conte
 # and the process is SIGKILLed with "Code Signature Invalid" the instant you touch the trackpad.
 # (The raw dev binary works precisely because it has no hardened runtime.) Entitlements are embedded
 # but only matter under hardened runtime, so they're harmless here.
-[ -f "HyperVibe.entitlements" ] || { echo "Error: HyperVibe.entitlements not found"; exit 1; }
+[ -f "SiriRemoteVibe.entitlements" ] || { echo "Error: SiriRemoteVibe.entitlements not found"; exit 1; }
 
-# Development builds MUST use the stable self-signed identity so TCC grants (Accessibility /
-# Input Monitoring) survive rebuilds. Ad-hoc signing remains available only as an explicit public
-# release-build choice. There is deliberately no automatic fallback between the two modes.
+# This fork uses user-authorized ad-hoc signing for local builds by default. Stable self-signed
+# builds are still available explicitly when the dedicated identity exists. Never silently change
+# modes after an explicitly requested stable build fails.
 SIGN_ID="siriRemote Local Signing"
 SIGN_KC="$HOME/Library/Keychains/siriremote-signing.keychain-db"
 CODESIGN_KEYCHAIN_ARGS=()
 if [ "$SIGN_MODE" = "stable" ]; then
     if [ ! -f "$SIGN_KC" ]; then
         echo "Error: stable signing keychain not found: $SIGN_KC"
-        echo "Refusing to ad-hoc sign a development build because that would reset macOS permissions."
+        echo "Stable signing was requested; refusing to switch signing modes automatically."
         exit 1
     fi
     if ! security find-certificate -c "$SIGN_ID" "$SIGN_KC" >/dev/null 2>&1; then
         echo "Error: stable signing certificate '$SIGN_ID' is unavailable."
-        echo "Refusing to ad-hoc sign a development build because that would reset macOS permissions."
+        echo "Stable signing was requested; refusing to switch signing modes automatically."
         exit 1
     fi
     # Never put a keychain password in argv: process inspection and build logs must not expose it.
@@ -234,7 +237,7 @@ if [ "$SIGN_MODE" = "stable" ]; then
     echo "Signing with stable local identity ($SIGN_ID)..."
 elif [ "$SIGN_MODE" = "adhoc" ]; then
     SIGN_ID="-"
-    echo "Ad-hoc signing (explicit public/release build)..."
+    echo "Ad-hoc signing (local/release build)..."
 else
     echo "Error: HYPERVIBE_SIGN_MODE must be 'stable' or 'adhoc', got: $SIGN_MODE"
     exit 1
@@ -259,7 +262,7 @@ codesign --force --options runtime --sign "$SIGN_ID" "${CODESIGN_KEYCHAIN_ARGS[@
 codesign --force --options runtime --sign "$SIGN_ID" "${CODESIGN_KEYCHAIN_ARGS[@]}" \
     "${APP_BUNDLE}/Contents/Frameworks/Sparkle.framework"
 
-if ! codesign --force --entitlements "HyperVibe.entitlements" \
+if ! codesign --force --entitlements "SiriRemoteVibe.entitlements" \
     --sign "$SIGN_ID" "${CODESIGN_KEYCHAIN_ARGS[@]}" "${APP_BUNDLE}"; then
     echo "Error: app signing failed. The existing installed App was not touched."
     exit 1
@@ -272,7 +275,7 @@ echo "✓ App bundle created: $APP_BUNDLE"
 echo ""
 echo "You can now:"
 echo "  1. Double-click $APP_BUNDLE to run it"
-echo "  2. Or run: open $APP_BUNDLE"
+echo "  2. Or run: open \"$APP_BUNDLE\""
 echo ""
 echo "Note: You'll need to grant Accessibility permissions in:"
 echo "  System Settings → Privacy & Security → Accessibility"

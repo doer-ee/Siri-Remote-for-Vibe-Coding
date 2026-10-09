@@ -1,5 +1,5 @@
 #!/bin/bash
-# Privileged half of HyperVibe Setup.app.
+# Privileged half of Siri Remote Vibe Setup.app.
 # Installs the app and optional microphone stack, then watches coreaudiod and automatically restores
 # the previous HAL plug-in if the new one causes a CPU storm.
 set -Eeuo pipefail
@@ -20,15 +20,15 @@ WATCH_SECONDS="${SRM_WATCH_SECONDS:-25}"
 WATCH_THRESHOLD=85
 WATCH_STREAK=3
 
-for required in HyperVibe.app "HyperVibe Uninstall.app" "$DRIVER" srm_router \
+for required in "Siri Remote for Vibe Coding.app" "Siri Remote Vibe Uninstall.app" "$DRIVER" srm_router \
     srm_captured "$PLIST_NAME" PAYLOAD-SHA256SUMS.txt; do
     [ -e "$PAYLOAD/$required" ] || { echo "missing payload item: $required" >&2; exit 1; }
 done
 
 echo "→ verifying installer payload"
 (cd "$PAYLOAD" && /usr/bin/shasum -a 256 -c PAYLOAD-SHA256SUMS.txt >/dev/null)
-/usr/bin/codesign --verify --deep --strict "$PAYLOAD/HyperVibe.app"
-/usr/bin/codesign --verify --deep --strict "$PAYLOAD/HyperVibe Uninstall.app"
+/usr/bin/codesign --verify --deep --strict "$PAYLOAD/Siri Remote for Vibe Coding.app"
+/usr/bin/codesign --verify --deep --strict "$PAYLOAD/Siri Remote Vibe Uninstall.app"
 
 # Downloaded bundles are quarantined as data inside Setup.app. The user has already approved the
 # outer installer via Gatekeeper; clear the nested payload so coreaudiod can load the HAL plug-in.
@@ -36,10 +36,12 @@ echo "→ verifying installer payload"
 
 BACKUP_DIR="$(/usr/bin/mktemp -d /private/tmp/hypervibe-install.XXXXXX)"
 DRIVER_BACKUP="$BACKUP_DIR/$DRIVER"
-APP_BACKUP="$BACKUP_DIR/HyperVibe.app.previous"
-UNINSTALL_BACKUP="$BACKUP_DIR/HyperVibe Uninstall.app.previous"
+APP_BACKUP="$BACKUP_DIR/Siri Remote for Vibe Coding.app.previous"
+UNINSTALL_BACKUP="$BACKUP_DIR/Siri Remote Vibe Uninstall.app.previous"
 SUPPORT_BACKUP="$BACKUP_DIR/SiriRemoteMic.support.previous"
 PLIST_BACKUP="$BACKUP_DIR/$PLIST_NAME.previous"
+LEGACY_APP_BACKUP="$BACKUP_DIR/HyperVibe.bundle-backup"
+LEGACY_UNINSTALL_BACKUP="$BACKUP_DIR/HyperVibe Uninstall.bundle-backup"
 HAD_DRIVER=0
 HAD_APP=0
 HAD_UNINSTALL=0
@@ -78,13 +80,19 @@ rollback_driver() {
 rollback_apps() {
     [ "$APPS_REPLACED" -eq 1 ] || return
     set +e
-    echo "→ restoring previous HyperVibe application"
-    /bin/rm -rf "/Applications/HyperVibe.app" "/Applications/HyperVibe Uninstall.app"
+    echo "→ restoring previous Siri Remote for Vibe Coding application"
+    /bin/rm -rf "/Applications/Siri Remote for Vibe Coding.app" "/Applications/Siri Remote Vibe Uninstall.app"
     if [ "$HAD_APP" -eq 1 ] && [ -d "$APP_BACKUP" ]; then
-        /bin/cp -R "$APP_BACKUP" "/Applications/HyperVibe.app"
+        /bin/cp -R "$APP_BACKUP" "/Applications/Siri Remote for Vibe Coding.app"
     fi
     if [ "$HAD_UNINSTALL" -eq 1 ] && [ -d "$UNINSTALL_BACKUP" ]; then
-        /bin/cp -R "$UNINSTALL_BACKUP" "/Applications/HyperVibe Uninstall.app"
+        /bin/cp -R "$UNINSTALL_BACKUP" "/Applications/Siri Remote Vibe Uninstall.app"
+    fi
+    if [ -d "$LEGACY_APP_BACKUP" ]; then
+        /bin/mv "$LEGACY_APP_BACKUP" "/Applications/HyperVibe.app"
+    fi
+    if [ -d "$LEGACY_UNINSTALL_BACKUP" ]; then
+        /bin/mv "$LEGACY_UNINSTALL_BACKUP" "/Applications/HyperVibe Uninstall.app"
     fi
     APPS_REPLACED=0
 }
@@ -121,30 +129,37 @@ fail() {
 trap fail ERR INT TERM HUP
 trap cleanup EXIT
 
-echo "→ installing HyperVibe"
+echo "→ installing Siri Remote for Vibe Coding"
 # Do not leave an old executable running after its bundle is replaced. The exact process name keeps
-# the separate "HyperVibe Host" helper untouched.
-/usr/bin/killall HyperVibe 2>/dev/null || true
+# the separate "SiriRemoteVibe Host" helper untouched.
+/usr/bin/killall SiriRemoteVibe HyperVibe 2>/dev/null || true
 for _ in 1 2 3 4 5; do
-    /usr/bin/pgrep -x HyperVibe >/dev/null 2>&1 || break
+    { /usr/bin/pgrep -x SiriRemoteVibe >/dev/null 2>&1 || /usr/bin/pgrep -x HyperVibe >/dev/null 2>&1; } || break
     /usr/bin/perl -e 'select(undef, undef, undef, 0.2)'
 done
 
-if [ -d "/Applications/HyperVibe.app" ]; then
+if [ -d "/Applications/Siri Remote for Vibe Coding.app" ]; then
     HAD_APP=1
-    /bin/cp -R "/Applications/HyperVibe.app" "$APP_BACKUP"
+    /bin/cp -R "/Applications/Siri Remote for Vibe Coding.app" "$APP_BACKUP"
 fi
-if [ -d "/Applications/HyperVibe Uninstall.app" ]; then
+if [ -d "/Applications/Siri Remote Vibe Uninstall.app" ]; then
     HAD_UNINSTALL=1
-    /bin/cp -R "/Applications/HyperVibe Uninstall.app" "$UNINSTALL_BACKUP"
+    /bin/cp -R "/Applications/Siri Remote Vibe Uninstall.app" "$UNINSTALL_BACKUP"
 fi
 
 APPS_REPLACED=1
-/bin/rm -rf "/Applications/HyperVibe.app" "/Applications/HyperVibe Uninstall.app"
-/bin/cp -R "$PAYLOAD/HyperVibe.app" "/Applications/HyperVibe.app"
-/bin/cp -R "$PAYLOAD/HyperVibe Uninstall.app" "/Applications/HyperVibe Uninstall.app"
-/usr/bin/codesign --verify --deep --strict "/Applications/HyperVibe.app"
-/usr/bin/codesign --verify --deep --strict "/Applications/HyperVibe Uninstall.app"
+# Same persistent bundle ID, one installed UI bundle. Keep the old names in rollback only.
+if [ -d "/Applications/HyperVibe.app" ]; then
+    /bin/mv "/Applications/HyperVibe.app" "$LEGACY_APP_BACKUP"
+fi
+if [ -d "/Applications/HyperVibe Uninstall.app" ]; then
+    /bin/mv "/Applications/HyperVibe Uninstall.app" "$LEGACY_UNINSTALL_BACKUP"
+fi
+/bin/rm -rf "/Applications/Siri Remote for Vibe Coding.app" "/Applications/Siri Remote Vibe Uninstall.app"
+/bin/cp -R "$PAYLOAD/Siri Remote for Vibe Coding.app" "/Applications/Siri Remote for Vibe Coding.app"
+/bin/cp -R "$PAYLOAD/Siri Remote Vibe Uninstall.app" "/Applications/Siri Remote Vibe Uninstall.app"
+/usr/bin/codesign --verify --deep --strict "/Applications/Siri Remote for Vibe Coding.app"
+/usr/bin/codesign --verify --deep --strict "/Applications/Siri Remote Vibe Uninstall.app"
 
 # PacketLogger is never present in public Release assets. Personal transfer packages may include it
 # explicitly; install that copy only when the payload actually contains it.
@@ -165,7 +180,7 @@ fi
 SERVICES_TOUCHED=1
 /bin/mkdir -p "$SUPPORT" "$HAL"
 
-# Preserve the exact HCITraces value that existed before HyperVibe first managed it. The daemon
+# Preserve the exact HCITraces value that existed before SiriRemoteVibe first managed it. The daemon
 # changes only this key; the uninstaller restores it without overwriting unrelated Bluetooth prefs.
 if [ ! -e "$DEBUG_BACKUP" ] && [ ! -e "$DEBUG_ABSENT_MARKER" ]; then
     if /usr/bin/defaults read /Library/Preferences/com.apple.MobileBluetooth.debug HCITraces \

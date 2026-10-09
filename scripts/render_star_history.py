@@ -92,7 +92,7 @@ def fetch_star_timestamps(owner: str, name: str, token: str) -> tuple[list[dt.da
                 "Accept": "application/vnd.github+json",
                 "Authorization": f"Bearer {token}",
                 "Content-Type": "application/json",
-                "User-Agent": "HyperVibe-Star-History",
+                "User-Agent": "SiriRemoteVibe-Star-History",
                 "X-GitHub-Api-Version": "2022-11-28",
             },
             method="POST",

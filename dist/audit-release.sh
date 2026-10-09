@@ -19,9 +19,9 @@ APP_VERSION="${VERSION%%-*}"
 . dist/version.sh
 BUILD_NUMBER="$(hypervibe_build_number "$VERSION")"
 OUT="$ROOT/dist/build/$VERSION"
-APP_ZIP="$OUT/HyperVibe-$VERSION-macOS-arm64.zip"
-FULL_ZIP="$OUT/HyperVibe-Full-Setup-$VERSION-arm64.zip"
-NATIVE_PKG="$OUT/HyperVibe-Full-Setup-$VERSION-arm64.pkg"
+APP_ZIP="$OUT/SiriRemoteVibe-$VERSION-macOS-arm64.zip"
+FULL_ZIP="$OUT/SiriRemoteVibe-Full-Setup-$VERSION-arm64.zip"
+NATIVE_PKG="$OUT/SiriRemoteVibe-Full-Setup-$VERSION-arm64.pkg"
 CHECKSUMS="$OUT/SHA256SUMS.txt"
 
 for required in "$APP_ZIP" "$FULL_ZIP" "$NATIVE_PKG" "$CHECKSUMS"; do
@@ -42,12 +42,12 @@ echo "→ auditing archive checksums"
 /usr/bin/ditto -x -k "$FULL_ZIP" "$AUDIT_DIR/full"
 /usr/sbin/pkgutil --expand-full "$NATIVE_PKG" "$AUDIT_DIR/native-pkg"
 
-APP="$AUDIT_DIR/app-only/HyperVibe.app"
-SETUP="$AUDIT_DIR/full/HyperVibe Setup.app"
+APP="$AUDIT_DIR/app-only/Siri Remote for Vibe Coding.app"
+SETUP="$AUDIT_DIR/full/Siri Remote Vibe Setup.app"
 PAYLOAD="$SETUP/Contents/Resources/payload"
-UNINSTALL="$PAYLOAD/HyperVibe Uninstall.app"
-PKG_COMPONENT="$AUDIT_DIR/native-pkg/HyperVibePayload.pkg"
-PKG_PAYLOAD="$PKG_COMPONENT/Payload/Library/Application Support/HyperVibe Installer/payload"
+UNINSTALL="$PAYLOAD/Siri Remote Vibe Uninstall.app"
+PKG_COMPONENT="$AUDIT_DIR/native-pkg/SiriRemoteVibePayload.pkg"
+PKG_PAYLOAD="$PKG_COMPONENT/Payload/Library/Application Support/Siri Remote Vibe Installer/payload"
 PKG_POSTINSTALL="$PKG_COMPONENT/Scripts/postinstall"
 
 for required in "$APP" "$SETUP" "$UNINSTALL" "$PAYLOAD/PAYLOAD-SHA256SUMS.txt" \
@@ -62,9 +62,9 @@ echo "→ auditing signatures and payload seal"
 /usr/bin/codesign --verify --deep --strict --verbose=2 "$UNINSTALL"
 (cd "$PAYLOAD" && /usr/bin/shasum -a 256 -c PAYLOAD-SHA256SUMS.txt >/dev/null)
 (cd "$PKG_PAYLOAD" && /usr/bin/shasum -a 256 -c PAYLOAD-SHA256SUMS.txt >/dev/null)
-/usr/bin/codesign --verify --deep --strict --verbose=2 "$PKG_PAYLOAD/HyperVibe.app"
+/usr/bin/codesign --verify --deep --strict --verbose=2 "$PKG_PAYLOAD/Siri Remote for Vibe Coding.app"
 /usr/bin/codesign --verify --deep --strict --verbose=2 \
-    "$PKG_PAYLOAD/HyperVibe Uninstall.app"
+    "$PKG_PAYLOAD/Siri Remote Vibe Uninstall.app"
 
 echo "→ auditing native Installer structure"
 /bin/bash -n "$PKG_POSTINSTALL"
@@ -112,7 +112,7 @@ for bundle in "$APP" "$SETUP" "$UNINSTALL" "$PAYLOAD/SiriRemoteMic.driver"; do
     }
 done
 
-for binary in "$APP/Contents/MacOS/HyperVibe" "$PAYLOAD/srm_router" "$PAYLOAD/srm_captured" \
+for binary in "$APP/Contents/MacOS/SiriRemoteVibe" "$PAYLOAD/srm_router" "$PAYLOAD/srm_captured" \
     "$PAYLOAD/SiriRemoteMic.driver/Contents/MacOS/SiriRemoteMic"; do
     [ "$(/usr/bin/lipo -archs "$binary")" = "arm64" ] || {
         echo "non-arm64 shipping binary: $binary" >&2
@@ -154,9 +154,9 @@ done
     echo "unexpected Voice Toggle-off sound content" >&2; exit 1;
 }
 /usr/bin/codesign --verify --deep --strict --verbose=2 "$SPARKLE_FRAMEWORK"
-/usr/bin/otool -L "$APP/Contents/MacOS/HyperVibe" \
+/usr/bin/otool -L "$APP/Contents/MacOS/SiriRemoteVibe" \
     | /usr/bin/grep -Fq '@rpath/Sparkle.framework/' || {
-        echo "HyperVibe is not linked to the bundled Sparkle framework" >&2
+        echo "SiriRemoteVibe is not linked to the bundled Sparkle framework" >&2
         exit 1
     }
 for key in SUFeedURL SUPublicEDKey SUVerifyUpdateBeforeExtraction; do

@@ -11,6 +11,48 @@ public final class MappingEngine {
     /// destination without leaking the full config into the app's input layer.
     public var configuredLayers: [Config.LayerDefinition] { config.settings.layers }
 
+    public struct ResolvedBinding {
+        public let action: Action
+        public let presentation: Config.Presentation?
+        public let holdDelay: Double?
+        public let sourceMode: String
+        public let key: String
+    }
+
+    private static let variants = [".taphold3", ".taphold2", ".taphold", ".hold3", ".hold2", ".hold", ".double", ".triple", ".tap"]
+
+    public func layerInheritsBaseBindings(_ layer: String) -> Bool {
+        config.layerInheritsBaseBindings(layer)
+    }
+
+    /// Shared runtime/editor lookup. A layer claims all variants of a physical button. Independent
+    /// layers never fall back to base actions, except the navigation that lets users leave the layer.
+    public func resolveBinding(_ key: String, layer: String?) -> ResolvedBinding? {
+        func inherited(_ candidate: String) -> ResolvedBinding? {
+            guard let res = config.resolveBinding(candidate, in: activeMode) else { return nil }
+            return ResolvedBinding(action: res.action, presentation: resolvePresentation(candidate),
+                                   holdDelay: resolveHoldDelay(candidate), sourceMode: res.sourceMode, key: candidate)
+        }
+        guard let layer = layer else { return inherited(key) }
+        if let binding = inherited(layer + "." + key) { return binding }
+        if let action = resolveOwn(key, in: layer) {
+            return ResolvedBinding(action: action, presentation: resolveOwnPresentation(key, in: layer),
+                                   holdDelay: resolveOwnHoldDelay(key, in: layer), sourceMode: layer, key: key)
+        }
+        let suffix = Self.variants.first { key.hasSuffix($0) }
+        let base = suffix.map { String(key.dropLast($0.count)) } ?? key
+        let family = [base] + Self.variants.map { base + $0 }
+        if family.contains(where: { resolve(layer + "." + $0) != nil || resolveOwn($0, in: layer) != nil }) { return nil }
+        let fallback = inherited(key)
+        if !layerInheritsBaseBindings(layer) {
+            switch fallback?.action {
+            case .layer?, .layerCycle?: return fallback
+            default: return nil
+            }
+        }
+        return fallback
+    }
+
     /// Look up the action bound to `eventKey` in the active mode, walking the inherits chain.
     public func resolve(_ eventKey: String) -> Action? {
         resolve(eventKey, in: activeMode)

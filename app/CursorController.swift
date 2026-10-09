@@ -1,6 +1,6 @@
 //
 //  CursorController.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Controls cursor movement and clicking using CGEvent
 //

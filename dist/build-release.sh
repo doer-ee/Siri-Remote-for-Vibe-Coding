@@ -37,7 +37,7 @@ export HYPERVIBE_BUILD_NUMBER="$BUILD_NUMBER"
 export HYPERVIBE_RELEASE_VERSION="$RELEASE_VERSION"
 COMMIT="$(git rev-parse HEAD)"
 OPUS_PREFIX="$(dist/build-opus.sh)"
-APP_STAGE="$ROOT/dist/build/staging/$RELEASE_VERSION/HyperVibe.app"
+APP_STAGE="$ROOT/dist/build/staging/$RELEASE_VERSION/Siri Remote for Vibe Coding.app"
 
 case "$APP_STAGE" in
     "$ROOT/app/"*)
@@ -49,7 +49,7 @@ esac
 /bin/rm -rf "$ROOT/dist/build/staging/$RELEASE_VERSION"
 /bin/mkdir -p "$(dirname "$APP_STAGE")"
 
-echo "→ building HyperVibe $APP_VERSION ($COMMIT)"
+echo "→ building SiriRemoteVibe $APP_VERSION ($COMMIT)"
 (
     cd app
     ./build.sh

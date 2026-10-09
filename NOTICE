@@ -1,4 +1,4 @@
-SiriRemoteForge
+Siri Remote for Vibe Coding
 Copyright (C) 2026 Wenqian Zhang
 
 This program is free software: you can redistribute it and/or modify it under
@@ -11,6 +11,7 @@ version. See the LICENSE file for the full text.
 Third-party notices
 -------------------------------------------------------------------------------
 
+Siri Remote for Vibe Coding is a fork of SiriRemoteForge.
 SiriRemoteForge began as a fork of "hypervibe", which was distributed under the
 MIT License. Substantial portions of the native layer — HID device seizing, the
 MultitouchSupport bridge, media-key synthesis, and the menu-bar scaffolding —
@@ -49,7 +50,7 @@ mic/driver/vendor/BlackHole-LICENSE.txt.
 The Siri Remote Mic router links Opus by Xiph.Org and contributors. Its BSD
 license and patent notice are retained in mic/router/Opus-LICENSE.txt.
 
-HyperVibe embeds Sparkle 2 by the Sparkle Project for software updates. Its MIT
+Siri Remote for Vibe Coding embeds Sparkle 2 by the Sparkle Project for software updates. Its MIT
 license and bundled third-party notices are retained in the application as
 Contents/Resources/Sparkle-LICENSE.txt.
 

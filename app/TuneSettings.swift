@@ -1,6 +1,6 @@
 //
 //  TuneSettings.swift
-//  HyperVibe (settings UI)
+//  Siri Remote Vibe (settings UI)
 //
 //  UI-managed tuning and interface preferences. Every value is seeded from and written back to
 //  config.jsonc; machine-local state such as window placement is intentionally not represented here.

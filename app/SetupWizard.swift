@@ -1,6 +1,6 @@
 //
 //  SetupWizard.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  A live first-run and recovery surface. Unlike the old three-dialog installer walkthrough, this
 //  window never assumes that opening a System Settings pane means permission was granted. Required
@@ -317,7 +317,7 @@ private struct SetupWizardView: View {
             sectionHeading(
                 symbol: "checkmark.shield.fill",
                 title: L("Make control reliable"),
-                body: L("HyperVibe checks the two permissions required for every button, gesture and pointer action. Status updates automatically when you return from System Settings.")
+                body: L("Siri Remote Vibe checks the two permissions required for every button, gesture and pointer action. Status updates automatically when you return from System Settings.")
             )
 
             VStack(spacing: 10) {
@@ -466,7 +466,7 @@ private struct SetupWizardView: View {
             VStack(spacing: 8) {
                 Text(L("Connect your Siri Remote"))
                     .font(.system(size: 25, weight: .semibold))
-                Text(L("Pair the aluminium Siri Remote (3rd gen) over Bluetooth. HyperVibe detects it live — no restart or reconnect button is needed."))
+                Text(L("Pair the aluminium Siri Remote (3rd gen) over Bluetooth. Siri Remote Vibe detects it live — no restart or reconnect button is needed."))
                     .font(.system(size: 13))
                     .foregroundStyle(Color.secondary)
                     .multilineTextAlignment(.center)
@@ -494,7 +494,7 @@ private struct SetupWizardView: View {
         VStack(spacing: 20) {
             heroIcon("checkmark.seal.fill", tint: .green)
             VStack(spacing: 7) {
-                Text(L("HyperVibe is ready"))
+                Text(L("Siri Remote Vibe is ready"))
                     .font(.system(size: 25, weight: .semibold))
                 Text(L("The system check remains available from the menu bar and Settings whenever you need it."))
                     .font(.system(size: 13))
@@ -536,7 +536,7 @@ private struct SetupWizardView: View {
                 )) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(L("Start at login")).font(.system(size: 14, weight: .semibold))
-                        Text(L("Keep the remote ready without opening HyperVibe manually."))
+                        Text(L("Keep the remote ready without opening Siri Remote Vibe manually."))
                             .font(.system(size: 11)).foregroundStyle(Color.secondary)
                     }
                 }

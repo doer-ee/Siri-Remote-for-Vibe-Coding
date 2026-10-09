@@ -1,6 +1,6 @@
-// make_app_icon.swift — generates the HyperVibe app-icon .iconset (a space-gray squircle with a
+// make_app_icon.swift — generates the Siri Remote Vibe app-icon .iconset (a space-gray squircle with a
 // silver 3rd-gen Siri Remote glyph). Writes PNGs into the iconset directory given as the first
-// argument (default ./HyperVibe.iconset). `create_app_bundle.sh` then runs `iconutil` to pack the
+// argument (default ./SiriRemoteVibe.iconset). `create_app_bundle.sh` then runs `iconutil` to pack the
 // .icns. Run standalone: `swift tools/make_app_icon.swift <out.iconset>`.
 import AppKit
 
@@ -75,7 +75,7 @@ func makeIcon(_ px: CGFloat) -> NSImage {
     return img
 }
 
-let outArg = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "./HyperVibe.iconset"
+let outArg = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "./SiriRemoteVibe.iconset"
 let iconset = URL(fileURLWithPath: outArg)
 try? FileManager.default.removeItem(at: iconset)
 try FileManager.default.createDirectory(at: iconset, withIntermediateDirectories: true)

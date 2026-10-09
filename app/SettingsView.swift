@@ -1,6 +1,6 @@
 //
 //  SettingsView.swift
-//  HyperVibe (settings UI)
+//  Siri Remote Vibe (settings UI)
 //
 //  Minimal, Apple-style settings window. Every value applies live and persists.
 //
@@ -39,11 +39,11 @@ struct SettingsView: View {
     @ObservedObject private var loc = Loc.shared
 
     private enum Tab: String, CaseIterable {
-        case tuning = "Tuning"
-        case voice = "Voice"
         case layout = "Layout"
+        case voice = "Voice"
+        case tuning = "Tuning"
     }
-    @State private var tab: Tab = .tuning
+    @State private var tab: Tab = .layout
 
     private enum CurveTarget: Equatable { case pointer, circular }
     /// When the user closes the lock, the curve they touched most recently becomes the source.
@@ -203,7 +203,7 @@ struct SettingsView: View {
                         selected: model.tune.dictation.activeMode == .external,
                         icon: "keyboard.badge.ellipsis", tint: .blue,
                         title: L("External Voice"),
-                        detail: L("Uses your configured side-button action and does not open HyperVibe's Voice capsule."))
+                        detail: L("Uses your configured side-button action and does not open Siri Remote Vibe's Voice capsule."))
                     voiceModeCard(
                         selected: model.tune.dictation.activeMode == .final,
                         icon: "text.badge.checkmark", tint: .purple,
@@ -279,7 +279,7 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 5)
 
-                    Label(L("Accessibility is checked first. If a custom editor hides its selection, HyperVibe briefly probes Copy and restores your clipboard. Empty selections continue as ordinary dictation; read-only rewrites and failed replacements are copied."),
+                    Label(L("Accessibility is checked first. If a custom editor hides its selection, Siri Remote Vibe briefly probes Copy and restores your clipboard. Empty selections continue as ordinary dictation; read-only rewrites and failed replacements are copied."),
                           systemImage: "lock.shield.fill")
                         .font(.system(size: 10.5, weight: .medium))
                         .foregroundStyle(.secondary)
@@ -312,9 +312,9 @@ struct SettingsView: View {
                 Text(L("API Credentials"))
             } footer: {
                 if voiceCredentials.storageBackend == .keychain {
-                    Text(L("Keys are stored in the macOS Keychain with this-device-only protection. On first save, choose Always Allow once for HyperVibe's fixed credential helper; normal App updates will not ask again. Keys are never written to config.jsonc, logs, the app bundle, or Git."))
+                    Text(L("Keys are stored in the macOS Keychain with this-device-only protection. On first save, choose Always Allow once for Siri Remote Vibe's fixed credential helper; normal App updates will not ask again. Keys are never written to config.jsonc, logs, the app bundle, or Git."))
                 } else if voiceCredentials.storageBackend == .localJSON {
-                    Text(L("Keys are saved as plaintext in a current-user-only credentials.json file for this public beta. Only HyperVibe Settings provides a supported way to write it. Keys are never written to config.jsonc, logs, the app bundle, or Git."))
+                    Text(L("Keys are saved as plaintext in a current-user-only credentials.json file for this public beta. Only Siri Remote Vibe Settings provides a supported way to write it. Keys are never written to config.jsonc, logs, the app bundle, or Git."))
                 } else {
                     Text(L("Checking local credential storage…"))
                 }
@@ -345,7 +345,7 @@ struct SettingsView: View {
             } header: {
                 Text(L("Delivery"))
             } footer: {
-                Text(L("HyperVibe captures the frontmost app and focused editor before showing its HUD. It never types into a changed or secure target. Whenever generated text cannot be inserted or replaced, the complete result is placed on the clipboard."))
+                Text(L("Siri Remote Vibe captures the frontmost app and focused editor before showing its HUD. It never types into a changed or secure target. Whenever generated text cannot be inserted or replaced, the complete result is placed on the clipboard."))
             }
 
             Section {
@@ -488,7 +488,7 @@ struct SettingsView: View {
             } header: {
                 Text(L("Last-run Latency"))
             } footer: {
-                Text(L("Measurements are kept in memory only and reset when HyperVibe quits. Transcript text is never shown in diagnostics."))
+                Text(L("Measurements are kept in memory only and reset when Siri Remote Vibe quits. Transcript text is never shown in diagnostics."))
             }
         }
         .formStyle(.grouped)
@@ -975,8 +975,9 @@ struct SettingsView: View {
                 .shadow(color: Color.accentColor.opacity(0.35), radius: 7, y: 3)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("siriRemote").font(.system(size: 19, weight: .semibold))
-                Text(L("Touch & gesture tuning"))
+                Text("Siri Remote").font(.system(size: 19, weight: .semibold))
+                Text("for Vibe Coding").font(.system(size: 12, weight: .medium))
+                Text(L("Apple TV remote · AI coding"))
                     .font(.system(size: 12)).foregroundStyle(.secondary)
             }
             Spacer()

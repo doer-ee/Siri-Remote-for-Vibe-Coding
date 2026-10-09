@@ -1,15 +1,16 @@
 #!/bin/bash
 
-# Build script for HyperVibe
+# Build script for Siri Remote for Vibe Coding
 # Make sure Xcode Command Line Tools are installed: xcode-select --install
 
 set -e
 
-echo "Building HyperVibe..."
+echo "Building Siri Remote for Vibe Coding..."
 
 SWIFT_FILES=(
     "main.swift"
     "Localization.swift"
+    "AppBrand.swift"
     "SiriRemoteApp.swift"
     "MenuBarManager.swift"
     "UpdateManager.swift"
@@ -64,8 +65,10 @@ SWIFT_FILES=(
     "DemoMode.swift"
     "ShortcutRecorder.swift"
     "LayoutView.swift"
+    "LayoutManagementViews.swift"
     # --- Config engine integration (this fork) ---
     "KeyMap.swift"
+    "HeldShortcutModifiers.swift"
     "MacActionExecutor.swift"
     "Spaces.swift"
     "WindowControl.swift"
@@ -161,7 +164,7 @@ swiftc \
     -module-cache-path "$MODULE_CACHE" \
     -sdk "$SDK_PATH" \
     -target "$TARGET" \
-    -o HyperVibe \
+    -o SiriRemoteVibe \
     "${SWIFT_FILES[@]}" \
     BuiltinMicRingWriter.o \
     -import-objc-header SiriRemote-Bridging-Header.h \
@@ -189,8 +192,7 @@ if [ $? -eq 0 ]; then
     echo "To create a proper macOS app bundle, run:"
     echo "  ./create_app_bundle.sh"
     echo ""
-    echo "Or run directly with:"
-    echo "  ./HyperVibe"
+    echo "Install the verified bundle in /Applications before launching it."
 else
     echo ""
     echo "✗ Build failed!"

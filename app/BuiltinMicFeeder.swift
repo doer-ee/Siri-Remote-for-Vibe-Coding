@@ -1,6 +1,6 @@
 //
 //  BuiltinMicFeeder.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Phase 2b of the virtual-mic fallback: feeds the Mac's BUILT-IN microphone into the
 //  "/SiriRemoteMicBuiltin" shared-memory ring (BuiltinMicRingWriter.c) that the
@@ -215,7 +215,7 @@ final class BuiltinMicFeeder {
             return
         }
 
-        // Never clear another live HyperVibe instance's ownership if an accidental duplicate is
+        // Never clear another live Siri Remote Vibe instance's ownership if an accidental duplicate is
         // shutting down. The normal operational rule still keeps exactly one UI process.
         var state: UInt64 = 0
         guard notify_get_state(token, &state) == NOTIFY_STATUS_OK, state == ownPID else {

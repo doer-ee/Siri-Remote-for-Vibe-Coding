@@ -1,6 +1,6 @@
 //
 //  AppWheel.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  A radial app launcher, summoned by holding the layer key.
 //

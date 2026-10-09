@@ -51,3 +51,9 @@ dist/hardware/
 video/
 output/
 tmp/
+
+# Current product build outputs
+app/SiriRemoteVibe
+app/Siri Remote for Vibe Coding.app/
+app/SiriRemoteVibe.icns
+app/SiriRemoteVibe.iconset/

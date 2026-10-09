@@ -1,6 +1,6 @@
 //
 //  ConfigStore.swift
-//  HyperVibe (config engine integration)
+//  Siri Remote Vibe (config engine integration)
 //
 //  Loads the user config from ~/.config/siriremote/config.jsonc, bootstrapping a
 //  commented default on first run. Uses an embedded default string (not a bundled
@@ -73,7 +73,7 @@ enum ConfigStore {
     static let minimalFallback =
         "{ \"settings\": { \"defaultMode\": \"global\" }, \"modes\": { \"global\": {} } }"
 
-    /// Shipped default. Bindings here OVERRIDE HyperVibe's native button behavior;
+    /// Shipped default. Bindings here OVERRIDE Siri Remote Vibe's native button behavior;
     /// anything left unbound falls through to native (push-to-talk, click/drag, etc.).
     /// Empty by default so nothing native is clobbered until you opt in.
     static let defaultTemplate = """
@@ -174,7 +174,7 @@ enum ConfigStore {
           "minimumRecordingSeconds": 1,
           "maxRecordingSeconds": 120,
           "dictionary": [
-            { "term": "HyperVibe", "aliases": ["hyper vibe", "Hyper Vibe"] },
+            { "term": "Siri Remote Vibe", "aliases": ["siri remote vibe"] },
             { "term": "layer", "aliases": [] },
             { "term": "core", "aliases": [] }
           ]

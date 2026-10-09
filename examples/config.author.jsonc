@@ -1,7 +1,7 @@
-// config.author.jsonc — the maintainer's actual daily-driver SiriRemoteForge config.
+// config.author.jsonc — the maintainer's actual daily-driver Siri Remote for Vibe Coding config.
 // A real-world companion to examples/config.jsonc; copy to ~/.config/siriremote/config.jsonc to use.
 {
-  // siriRemote config — edit and save; changes hot-reload live.
+  // Siri Remote Vibe config — edit and save; changes hot-reload live.
   // Event keys: ring.up ring.down ring.left ring.right
   //             button.menu button.tv button.siri button.playPause
   //             button.volumeUp button.volumeDown button.back
@@ -108,7 +108,7 @@
       "minimumRecordingSeconds": 1, // discard accidental short turns before upload/output
       "maxRecordingSeconds": 120,
       "dictionary": [
-        { "term": "HyperVibe", "aliases": ["hyper vibe", "Hyper Vibe"] },
+        { "term": "Siri Remote Vibe", "aliases": ["siri remote vibe"] },
         { "term": "hypergraph", "aliases": ["hyper graph"] },
         { "term": "skill", "aliases": [] },
         { "term": "layer", "aliases": [] },
@@ -227,7 +227,7 @@
       "button.menu.taphold":  { "action": "closeWindow", "after": 0.5,
                                 "label": "Close Window", "icon": "xmark.circle.fill" },
       "button.menu.taphold2": { "action": "applescript", "after": 1.2,
-                                "script": "tell application \"System Events\" to set n to name of first application process whose frontmost is true\nif n is not \"HyperVibe\" then tell application n to quit",
+                                "script": "tell application \"System Events\" to set n to name of first application process whose frontmost is true\nif n is not \"SiriRemoteVibe\" and n is not \"Siri Remote for Vibe Coding\" then tell application n to quit",
                                 "label": "Quit App", "icon": "power" },
       // Click-ring = a 4-way arrow d-pad. Left/Right are plain ←/→: inside Mission Control they
       // browse spaces/windows; elsewhere they're just arrow keys (no direct desktop switching).
@@ -288,7 +288,7 @@
       "button.menu.taphold2": { "action": "closeWindow", "after": 1.0,
                                 "label": "Close Window", "icon": "xmark.circle.fill" },
       "button.menu.taphold3": { "action": "applescript", "after": 1.7,
-                                "script": "tell application \"System Events\" to set n to name of first application process whose frontmost is true\nif n is not \"HyperVibe\" then tell application n to quit",
+                                "script": "tell application \"System Events\" to set n to name of first application process whose frontmost is true\nif n is not \"SiriRemoteVibe\" and n is not \"Siri Remote for Vibe Coding\" then tell application n to quit",
                                 "label": "Quit App", "icon": "power" },
       // BASE (no layer): ring left/right = prev/next TAB (Cmd+Option+←/→).
       "ring.left":     { "action": "keystroke", "keys": "cmd+opt+left" },

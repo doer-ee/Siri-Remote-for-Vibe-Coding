@@ -1,6 +1,6 @@
 //
 //  VoiceDictationCoordinator.swift
-//  HyperVibe
+//  Siri Remote Vibe
 //
 //  Latency-critical dictation state machine. Audio capture and the Realtime handshake begin on the
 //  raw side-button press, hiding their startup under the existing 200 ms tap/hold discriminator.
@@ -1248,7 +1248,7 @@ final class VoiceDictationCoordinator {
                     if Self.isPermanentPrewarmFailure(error) {
                         self.blockedPrewarmModes.insert(mode)
                         self.prewarmFailureCounts.removeValue(forKey: mode)
-                        NSLog("[HyperVibe Voice] %@ prewarm paused until settings change: %@",
+                        NSLog("[Siri Remote Vibe Voice] %@ prewarm paused until settings change: %@",
                               mode.rawValue, error.localizedDescription)
                         return
                     }
@@ -1257,7 +1257,7 @@ final class VoiceDictationCoordinator {
                     let delay = Self.prewarmRetryDelay(
                         failureCount: count, jitter: Double.random(in: 0.85...1.15)
                     )
-                    NSLog("[HyperVibe Voice] %@ prewarm failed; retry in %.1fs: %@",
+                    NSLog("[Siri Remote Vibe Voice] %@ prewarm failed; retry in %.1fs: %@",
                           mode.rawValue, delay, error.localizedDescription)
                     let work = DispatchWorkItem { [weak self] in
                         guard let self else { return }

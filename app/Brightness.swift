@@ -1,6 +1,6 @@
 //
 //  Brightness.swift
-//  HyperVibe (config engine integration)
+//  Siri Remote Vibe (config engine integration)
 //
 //  Dim / restore ALL displays by synthesizing the hardware brightness keys
 //  (NX_KEYTYPE_BRIGHTNESS_UP/DOWN, as NX_SYSDEFINED subtype-8 events) — exactly like pressing
