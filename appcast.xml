@@ -5,12 +5,12 @@
         <link>https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding</link>
         <description>Siri Remote for Vibe Coding software updates</description>
         <language>en</language>
-        <!-- This fork has no published binaries yet. dist/update-appcast.sh adds signed releases. -->
+        <!-- Signed release entries for Siri Remote for Vibe Coding. dist/update-appcast.sh appends future releases. -->
         <!-- hypervibe:stable:start -->
     <item>
         <title>Siri Remote for Vibe Coding 1.0.1</title>
         <link>https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases/tag/v1.0.1</link>
-        <pubDate>Fri, 09 Oct 2026 17:12:20 -0500</pubDate>
+        <pubDate>Fri, 09 Oct 2026 17:13:18 -0500</pubDate>
         <sparkle:version>100019000</sparkle:version>
         <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
         <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
@@ -94,6 +94,6 @@ is also downloaded and verified against the committed Sparkle public key.
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: E91bPh0vkp/zMZN31dxFCXa7XUZodNJI+nZtXMXDnUAfg5YWAJvcRLXRDRZ7Ba7L2/ycQydQIos8BVMnZhRTAw==
-length: 5953
+edSignature: jzlL/tU7C8EMi8/qBm0WRkc83XomhlhXrfQk3gyQmTa5Uq2YP7TIKAvmOtw3D7tOngDCb50ofgC2zUVyptPDDw==
+length: 5971
 -->
