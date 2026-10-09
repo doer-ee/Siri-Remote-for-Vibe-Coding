@@ -9,8 +9,10 @@
   signatures before and after installation, then leave exactly one installed UI instance running.
 - Preserve `com.hypervibe.app`, credential broker identity, Keychain/data paths, config directory and
   `HYPERVIBE_*` build overrides. These are compatibility identifiers, not the displayed product name.
-- The fork has no published releases. Its appcast is empty until a signed release is published;
-  inherited upstream release notes below describe historical upstream artifacts.
+- Version **1.0.1** is the first release under the new name. Its App-only updates use the fork
+  public key in `app/sparkle-public-key.txt`, with the private key in login Keychain account
+  `doer-ee.SiriRemoteVibe`. Older local/upstream builds require one manual install. Archived
+  upstream release notes below describe historical upstream artifacts.
 - Current features include instant held shortcuts with app switch / On Press / On Release, macros,
   touch disable, editable layers/apps, independent new layers and Copy From. Voice is retained.
 - Latest UI order is Layout → Voice → Tuning. Manage Layers is beside Manage Apps; Copy From follows
@@ -25,7 +27,8 @@
 - Installed main App and renamed uninstaller; old bundles retained as local backups. User config
   remains byte-identical. Login registration reports enabled; only one installed UI process runs.
 - macOS privacy permissions were restored with the user completing system authentication.
-- Public binary releases were not created. Website screenshots/videos remain historical examples.
+- The rename itself did not publish binaries; 1.0.1 release preparation follows it. Website
+  screenshots/videos remain historical examples.
 
 ## Historical upstream handoff
 

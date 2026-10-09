@@ -36,6 +36,16 @@ BUILD_NUMBER="$(hypervibe_build_number "$RELEASE_VERSION")"
 export HYPERVIBE_BUILD_NUMBER="$BUILD_NUMBER"
 export HYPERVIBE_RELEASE_VERSION="$RELEASE_VERSION"
 COMMIT="$(git rev-parse HEAD)"
+# Fail before the expensive build when the fork-specific signing key is absent or mismatched.
+if [ -z "${HYPERVIBE_SPARKLE_PRIVATE_KEY_FILE:-}" ]; then
+    SPARKLE_ROOT="$(app/prepare_sparkle.sh)"
+    KEYCHAIN_PUBLIC_KEY="$("$SPARKLE_ROOT/bin/generate_keys" \
+        --account "${HYPERVIBE_SPARKLE_ACCOUNT:-doer-ee.SiriRemoteVibe}" -p)"
+    [ "$KEYCHAIN_PUBLIC_KEY" = "$(tr -d '[:space:]' < app/sparkle-public-key.txt)" ] || {
+        echo "Release signing key does not match app/sparkle-public-key.txt" >&2
+        exit 1
+    }
+fi
 OPUS_PREFIX="$(dist/build-opus.sh)"
 APP_STAGE="$ROOT/dist/build/staging/$RELEASE_VERSION/Siri Remote for Vibe Coding.app"
 

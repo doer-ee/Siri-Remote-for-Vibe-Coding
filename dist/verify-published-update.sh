@@ -42,7 +42,15 @@ EXPECTED_URL="https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases/do
 
 SPARKLE_ROOT="$(app/prepare_sparkle.sh)"
 SIGN_UPDATE="$SPARKLE_ROOT/bin/sign_update"
-"$SIGN_UPDATE" --verify "$APPCAST"
+SPARKLE_ACCOUNT="${HYPERVIBE_SPARKLE_ACCOUNT:-doer-ee.SiriRemoteVibe}"
+run_sign_update() {
+    if [ -n "${HYPERVIBE_SPARKLE_PRIVATE_KEY_FILE:-}" ]; then
+        "$SIGN_UPDATE" --ed-key-file "$HYPERVIBE_SPARKLE_PRIVATE_KEY_FILE" "$@"
+    else
+        "$SIGN_UPDATE" --account "$SPARKLE_ACCOUNT" "$@"
+    fi
+}
+run_sign_update --verify "$APPCAST"
 /usr/bin/xmllint --noout "$APPCAST"
 
 ITEM="//*[local-name()='item'][*[local-name()='shortVersionString' and normalize-space(text())='$VERSION']]"
@@ -75,7 +83,8 @@ ACTUAL_LENGTH="$(/usr/bin/stat -f '%z' "$ARCHIVE")"
     echo "download length mismatch: $ACTUAL_LENGTH != $LENGTH" >&2
     exit 1
 }
-"$SIGN_UPDATE" --verify "$ARCHIVE" "$SIGNATURE"
+/usr/bin/xcrun swift dist/tools/verify_archive_signature.swift \
+    app/sparkle-public-key.txt "$ARCHIVE" "$SIGNATURE"
 
 /bin/mkdir -p "$VERIFY_ROOT/extracted"
 /usr/bin/ditto -x -k "$ARCHIVE" "$VERIFY_ROOT/extracted"
@@ -87,6 +96,8 @@ APP="$VERIFY_ROOT/extracted/Siri Remote for Vibe Coding.app"
 [ "$(/usr/bin/plutil -extract CFBundleVersion raw -o - "$APP/Contents/Info.plist")" \
     = "$EXPECTED_BUILD" ]
 [ "$(/usr/bin/plutil -extract SUFeedURL raw -o - "$APP/Contents/Info.plist")" = "$FEED_URL" ]
+[ "$(/usr/bin/plutil -extract SUPublicEDKey raw -o - "$APP/Contents/Info.plist")" \
+    = "$(tr -d '[:space:]' < app/sparkle-public-key.txt)" ]
 [ "$(/usr/bin/lipo -archs "$APP/Contents/MacOS/SiriRemoteVibe")" = "arm64" ]
 
 echo "PUBLISHED_UPDATE_VERIFY PASS version=$VERSION build=$EXPECTED_BUILD bytes=$ACTUAL_LENGTH"

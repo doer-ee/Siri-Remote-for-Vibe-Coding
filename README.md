@@ -10,7 +10,7 @@
 &nbsp;![Platform](https://img.shields.io/badge/platform-macOS%2013%2B-lightgrey)
 &nbsp;![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 &nbsp;![Frameworks](https://img.shields.io/badge/private-MultitouchSupport%20·%20SkyLight-8A2BE2)
-&nbsp;![Distribution](https://img.shields.io/badge/distribution-direct%20beta-blue)
+&nbsp;![Distribution](https://img.shields.io/badge/distribution-direct%20release-blue)
 
 *Use the USB-C Siri Remote (3rd generation) as a programmable macOS controller for vibe coding.*
 *Hold a button to talk to your coding app, run shortcuts and macros, and switch between your own layouts.*
@@ -73,7 +73,7 @@ which also means an agent or a script can reconfigure the whole device by editin
 > trackpad and Spaces. The current build is therefore unsandboxed and distributed directly rather
 > than through the Mac App Store; a supported public input API and entitlement path would be needed
 > for a conventional sandboxed distribution. Build it
-> yourself or use a beta GitHub Release when available. Release builds are ad-hoc signed, not
+> yourself or download a GitHub Release. Release builds are ad-hoc signed, not
 > Apple-notarized, and need a one-time right-click → Open. This is a power tool, and it asks for the
 > permissions it needs: Accessibility and Input Monitoring.
 
@@ -150,24 +150,23 @@ action.
 
 ---
 
-## Install a beta build
+## Download 1.0.1
 
-This fork currently has **no published binary releases**. Build from source below. Future builds on the
-[Releases page](https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases) will provide three Apple-silicon
-downloads:
+[Version 1.0.1](https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases/tag/v1.0.1)
+is the first release under **Siri Remote for Vibe Coding**. It provides three Apple-silicon downloads:
 
-- **Native Full Installer (recommended)** — open `SiriRemoteVibe-Full-Setup-…-arm64.pkg`. The standard
+- **Native Full Installer (recommended)** — open `SiriRemoteVibe-Full-Setup-1.0.1-arm64.pkg`. The standard
   macOS Installer places the app, Siri Remote Mic system components, background service and
   uninstaller with one administrator approval. Siri Remote Vibe then opens a live System Check for the
   privacy choices macOS does not let an installer make on the user's behalf.
-- **App only** — unzip `SiriRemoteVibe-…-macOS-arm64.zip`, move `Siri Remote for Vibe Coding.app` to Applications, then
+- **App only** — unzip `SiriRemoteVibe-1.0.1-macOS-arm64.zip`, move `Siri Remote for Vibe Coding.app` to Applications, then
   right-click → **Open** once.
 - **Legacy Full Setup** — adds the Siri Remote Mic system components and
   `Siri Remote Vibe Uninstall.app`. It asks for an administrator password, briefly restarts system audio,
   and runs a 25-second `coreaudiod` safety check with automatic plug-in rollback.
 
 These packages require macOS 13+ and are currently arm64-only. Source builds can still be made locally. The
-beta archives are ad-hoc signed rather than Apple-notarized because the hardened runtime terminates
+release archives are ad-hoc signed rather than Apple-notarized because the hardened runtime terminates
 the private MultitouchSupport callback used by the remote trackpad.
 
 ---
@@ -220,6 +219,11 @@ again after a rebuild. Stable local signing is optional via `HYPERVIBE_SIGN_MODE
 fails if the `siriRemote Local Signing` identity is unavailable.
 
 ### Software updates
+
+**Migration from HyperVibe / earlier local builds:** install 1.0.1 manually once from the Release
+page. This fork now uses its own Sparkle signing key, so earlier builds that trust the upstream key
+cannot authenticate the new release. 1.0.1 and later verify updates against this fork's public key.
+
 
 Siri Remote Vibe checks its release feed daily by default. It can download a newer **app-only** archive in
 the background, or the user can choose **Check for Updates…** from either Settings or the menu bar.

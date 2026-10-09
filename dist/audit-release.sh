@@ -166,6 +166,13 @@ for key in SUFeedURL SUPublicEDKey SUVerifyUpdateBeforeExtraction; do
     }
 done
 
+[ "$(/usr/bin/plutil -extract SUPublicEDKey raw -o - "$APP/Contents/Info.plist")" \
+    = "$(tr -d '[:space:]' < app/sparkle-public-key.txt)" ] || {
+    echo "App embeds the wrong Sparkle public key" >&2; exit 1;
+}
+[ "$(/usr/bin/plutil -extract SUFeedURL raw -o - "$APP/Contents/Info.plist")" \
+    = "https://raw.githubusercontent.com/doer-ee/Siri-Remote-for-Vibe-Coding/main/appcast.xml" ]
+
 echo "→ auditing licenses and public-data boundary"
 /usr/bin/cmp "$PAYLOAD/config.jsonc" "$ROOT/examples/config.jsonc"
 [ "$(/usr/bin/plutil -extract CFBundleShortVersionString raw -o - \

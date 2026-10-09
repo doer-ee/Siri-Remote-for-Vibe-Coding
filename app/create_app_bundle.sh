@@ -8,11 +8,16 @@ APP_NAME="SiriRemoteVibe"
 APP_DISPLAY_NAME="Siri Remote for Vibe Coding"
 APP_BUNDLE="${HYPERVIBE_APP_BUNDLE_PATH:-${APP_DISPLAY_NAME}.app}"
 BINARY_PATH="${HYPERVIBE_BINARY_PATH:-$APP_NAME}"
-APP_VERSION="${HYPERVIBE_VERSION:-1.0.0}"
+APP_VERSION="${HYPERVIBE_VERSION:-1.0.1}"
 BUILD_NUMBER="${HYPERVIBE_BUILD_NUMBER:-1}"
 RELEASE_VERSION="${HYPERVIBE_RELEASE_VERSION:-${APP_VERSION}-local.${BUILD_NUMBER}}"
 SIGN_MODE="${HYPERVIBE_SIGN_MODE:-adhoc}"
 SPARKLE_ROOT="$(./prepare_sparkle.sh)"
+SPARKLE_PUBLIC_KEY="$(tr -d '[:space:]' < sparkle-public-key.txt)"
+if ! [[ "$SPARKLE_PUBLIC_KEY" =~ ^[A-Za-z0-9+/]{43}=$ ]]; then
+    echo "Error: sparkle-public-key.txt must contain a base64-encoded 32-byte public key"
+    exit 1
+fi
 
 if ! [[ "$APP_VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}$ ]]; then
     echo "Error: HYPERVIBE_VERSION must be numeric (for example 0.1.0), got: $APP_VERSION"
@@ -142,7 +147,7 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" <<EOF
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/doer-ee/Siri-Remote-for-Vibe-Coding/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>soFRqtCkorMRWAPsLRxn3ZE7vaihfpjYFH+4kXmc/Hk=</string>
+	<string>$SPARKLE_PUBLIC_KEY</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUAllowsAutomaticUpdates</key>

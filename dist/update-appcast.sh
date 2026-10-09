@@ -20,6 +20,7 @@ done
 
 SPARKLE_ROOT="$(app/prepare_sparkle.sh)"
 SIGN_UPDATE="$SPARKLE_ROOT/bin/sign_update"
+SPARKLE_ACCOUNT="${HYPERVIBE_SPARKLE_ACCOUNT:-doer-ee.SiriRemoteVibe}"
 if [ -n "${HYPERVIBE_SPARKLE_PRIVATE_KEY_FILE:-}" ]; then
     [ -f "$HYPERVIBE_SPARKLE_PRIVATE_KEY_FILE" ] || {
         echo "Sparkle private-key file not found" >&2
@@ -30,11 +31,15 @@ run_sign_update() {
     if [ -n "${HYPERVIBE_SPARKLE_PRIVATE_KEY_FILE:-}" ]; then
         "$SIGN_UPDATE" --ed-key-file "$HYPERVIBE_SPARKLE_PRIVATE_KEY_FILE" "$@"
     else
-        "$SIGN_UPDATE" "$@"
+        "$SIGN_UPDATE" --account "$SPARKLE_ACCOUNT" "$@"
     fi
 }
 SIGNATURE="$(run_sign_update -p "$ARCHIVE")"
 [ -n "$SIGNATURE" ] || { echo "Sparkle archive signing returned an empty signature" >&2; exit 1; }
+# Authenticate against the public key shipped in the App, never just against whichever private key
+# happened to sign this file. Refuse a mismatched override before changing the feed.
+/usr/bin/xcrun swift dist/tools/verify_archive_signature.swift \
+    app/sparkle-public-key.txt "$ARCHIVE" "$SIGNATURE"
 LENGTH="$(/usr/bin/stat -f '%z' "$ARCHIVE")"
 CHANNEL="stable"
 if [[ "$VERSION" == *-* ]]; then CHANNEL="beta"; fi

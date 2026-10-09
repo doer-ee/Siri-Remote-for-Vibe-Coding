@@ -1156,7 +1156,7 @@ struct SettingsView: View {
         } footer: {
             Text(device.updatedAt == nil
                  ? L("The remote's microphone is not readable on macOS — see %@", "docs/mic-reverse-engineering.md")
-                 : L("Battery and firmware come from the system Bluetooth stack. The microphone is not readable on macOS."))
+                 : L("Battery and firmware come from the system Bluetooth stack. Remote microphone capture requires the optional Siri Remote Mic components and Apple PacketLogger."))
                 .font(.system(size: 11))
         }
     }
@@ -1344,7 +1344,7 @@ struct SettingsView: View {
         } header: {
             Text(L("Software Updates"))
         } footer: {
-            Text(L("Verified Full Setup updates download in the background. macOS asks for administrator approval only when an update installs system components."))
+            Text(L("Verified App updates download in the background. Install Full Setup separately to update microphone system components."))
                 .font(.system(size: 11))
         }
     }

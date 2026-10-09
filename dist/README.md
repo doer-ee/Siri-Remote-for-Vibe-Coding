@@ -23,7 +23,7 @@ checksum-pinned libopus 1.6.1 source, compiles it for macOS 13, and links it sta
 shipping router. Neither the build Mac nor the destination Mac needs Homebrew.
 
 ```sh
-dist/build-release.sh 0.1.0-beta.1
+dist/build-release.sh 1.0.1
 ```
 
 The command requires a clean worktree, rebuilds every shipping binary, injects the numeric app
@@ -32,10 +32,10 @@ staging bundle, runs the router and HAL
 offline tests, and writes:
 
 ```text
-dist/build/0.1.0-beta.1/
-├── SiriRemoteVibe-0.1.0-beta.1-macOS-arm64.zip
-├── SiriRemoteVibe-Full-Setup-0.1.0-beta.1-arm64.zip
-├── SiriRemoteVibe-Full-Setup-0.1.0-beta.1-arm64.pkg
+dist/build/1.0.1/
+├── SiriRemoteVibe-1.0.1-macOS-arm64.zip
+├── SiriRemoteVibe-Full-Setup-1.0.1-arm64.zip
+├── SiriRemoteVibe-Full-Setup-1.0.1-arm64.pkg
 └── SHA256SUMS.txt
 ```
 
@@ -51,9 +51,10 @@ and its macOS privacy grants are left untouched.
 The final step also updates and signs the repository-root `appcast.xml`. Siri Remote Vibe checks that feed
 daily and can download the app-only ZIP in the background. Every archive is authenticated with
 Sparkle Ed25519 before extraction; published feeds receive an additional whole-feed signature.
-The private key remains in the maintainer's login Keychain and must never be committed. Back it up
+The public key is committed as `app/sparkle-public-key.txt`. The private key remains in the
+maintainer's login Keychain under account `doer-ee.SiriRemoteVibe` and must never be committed. Back it up
 to encrypted offline storage with Sparkle's
-`generate_keys -x`, and import it on a replacement release machine with `generate_keys -f`.
+`generate_keys --account doer-ee.SiriRemoteVibe -x /encrypted/backup/key.txt`, and import it on a replacement release machine with `generate_keys --account doer-ee.SiriRemoteVibe -f /encrypted/backup/key.txt`.
 Automatic updates replace only `Siri Remote for Vibe Coding.app`, so they do not restart system audio or request an
 administrator password. Full Setup remains a separate, explicitly selected download when users want
 to install or refresh the virtual microphone and its privileged services.
@@ -101,9 +102,9 @@ Personal output prints a warning and must never be uploaded to GitHub.
 
 ## Signing and Gatekeeper
 
-These beta app bundles are ad-hoc signed, not Apple-notarized. The hardened runtime is intentionally
+These release app bundles are ad-hoc signed, not Apple-notarized. The hardened runtime is intentionally
 disabled because it terminates the private MultitouchSupport callback used by the remote trackpad.
-An ad-hoc identifier is not a trustworthy Keychain peer identity, so public betas do not invoke the
+An ad-hoc identifier is not a trustworthy Keychain peer identity, so ad-hoc releases do not invoke the
 certificate-bound credential helper. Native cloud dictation remains available by storing keys in a
 separate current-user-only plaintext JSON file under Application Support; the shareable config and
 release artifacts never contain it. Certificate-bound builds continue to prefer the login Keychain.
@@ -111,3 +112,14 @@ The native package is unsigned unless `HYPERVIBE_INSTALLER_SIGN_IDENTITY` names 
 Installer identity; App signing and Installer signing are separate Apple certificate types. Until
 both Developer ID signing and notarization are configured, use **right-click → Open** for the first
 launch. Do not tell users to globally disable Gatekeeper.
+
+## Fork update signing
+
+Release preparation fails early if the Keychain public key does not match the committed public key.
+`HYPERVIBE_SPARKLE_ACCOUNT` can select a different account with the same key, and the existing
+`HYPERVIBE_SPARKLE_PRIVATE_KEY_FILE` override remains available for controlled release environments.
+Archive signatures are independently verified with CryptoKit against the committed public key before
+publishing a feed item. An override cannot silently sign a release with another key.
+
+Older builds embed the upstream public key and require a one-time manual install of 1.0.1. Keep the
+fork's signing key for subsequent releases; changing it breaks the established update trust chain.
