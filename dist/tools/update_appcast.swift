@@ -53,7 +53,7 @@ do {
     let item = """
 
         <item>
-            <title>SiriRemoteVibe \(encodedVersion)</title>
+            <title>Siri Remote for Vibe Coding \(encodedVersion)</title>
             <link>\(releaseURL)</link>
             <pubDate>\(xmlEscape(pubDate))</pubDate>
             <sparkle:version>\(xmlEscape(build))</sparkle:version>
