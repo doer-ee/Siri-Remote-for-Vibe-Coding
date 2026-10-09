@@ -72,6 +72,8 @@ enum ActionSymbolStyle {
         switch action {
         case .keystroke(let keys), .repeatKey(let keys, _, _):
             return tint(forKeystroke: keys)
+        case .macro:
+            return .controlAccentColor
         case .pushToTalk:
             return .systemRed
         case .media(let raw):
@@ -133,6 +135,8 @@ enum ActionSymbolStyle {
         switch action {
         case .keystroke(let keys):
             return cue(forKeystroke: keys)
+        case .macro:
+            return .generic
         case .repeatKey(let keys, _, _):
             let underlying = cue(forKeystroke: keys)
             return underlying == .generic ? .repeatAction : underlying
@@ -149,6 +153,7 @@ enum ActionSymbolStyle {
             }
         case .mouse(let op):
             switch op.lowercased() {
+            case "disabled": return .generic
             case "move": return .pointer
             case "scroll": return .scroll
             case "rightclick", "right-click", "contextclick": return .contextClick

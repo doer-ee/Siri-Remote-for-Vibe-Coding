@@ -303,12 +303,24 @@ class RemoteInputHandler {
     /// `.taphold*` key's DEFERRED tap when the press turned out to be a hold that already deleted.
     private var heldKeyEngaged: Set<String> = []
 
+    private struct PushToTalkBinding {
+        let keys: String
+        let onPress: String?
+        let onRelease: String?
+        let switchToApp: String?
+    }
+
+    private struct OpenPushToTalk {
+        let combo: KeyMap.Combo
+        let onRelease: String?
+    }
+
     /// Push-to-talk pairs currently OPEN: buttonName → the combo fired on the press edge, replayed
     /// verbatim on the release edge. Capturing at press time keeps the two edges firing the SAME
     /// combo even if the binding resolves differently mid-hold (a layer engaged by another button,
-    /// an app switch, a config hot-reload) — the target hotkey is a toggle, and an unpaired edge
-    /// would leave it latched on. Closed by the release edge or by `endPressScopedWork`.
-    private var pushToTalkOpen: [String: String] = [:]
+    /// an app switch, a config hot-reload). The optional release shortcut is fired only after the
+    /// held combo is released on a normal physical button release, never on disconnect teardown.
+    private var pushToTalkOpen: [String: OpenPushToTalk] = [:]
     /// Push-to-talk presses whose ACTIVATION delay has not yet elapsed: buttonName → the scheduled
     /// opener. A too-quick tap (released before `pushToTalkActivationDelay`) cancels this and fires
     /// nothing, so a brush of the button can't toggle dictation on; holding past the delay fires the
@@ -1002,10 +1014,10 @@ class RemoteInputHandler {
             }
         }
 
-        // 2) Push-to-talk: fire the combo on BOTH raw edges — press AND release — immediately,
-        //    bypassing tap/double/taphold/hold discrimination and auto-repeat entirely. Built for
-        //    toggle hotkeys (press = dictation ON, release = OFF), so the two edges must always
-        //    come in matched pairs:
+        // 2) Push-to-talk: hold the combo down after the opener and release it on the matching
+        //    physical edge, bypassing tap/double/taphold/hold discrimination and auto-repeat.
+        //    This is a true key lifetime, not two momentary keystrokes, so apps that implement
+        //    press-and-hold voice input see the same state as a real keyboard:
         //      - the release replays the combo CAPTURED AT PRESS TIME, and closes the pair even if
         //        the key no longer resolves to `.pushToTalk` (layer/mode change mid-hold, config
         //        hot-reload) — same reasoning as the unconditional repeat-timer stop below;
@@ -1030,12 +1042,18 @@ class RemoteInputHandler {
             // `.tap` / `.double`. When the native Settings switch claimed an ordinary base binding,
             // that base remains the single-tap fallback so enabling Voice does not erase an action.
             let now = CACurrentMediaTime()
+            let configuredHoldPushToTalk = {
+                if case .pushToTalk? = controller.resolvedAction(for: tapKey + ".hold") { return true }
+                return false
+            }()
             let configuredDouble = controller.hasBinding(for: tapVariant(tapKey, 2))
             let nativeCopyDouble = shouldCopyLastNativeDictationOnDouble?() == true
             let singleTapKey: String? = {
                 let explicit = tapKey + ".tap"
                 if controller.hasBinding(for: explicit) { return explicit }
-                if nativeUsesBaseTap, controller.hasBinding(for: tapKey) { return tapKey }
+                if (nativeUsesBaseTap || configuredHoldPushToTalk), controller.hasBinding(for: tapKey) {
+                    return tapKey
+                }
                 return nil
             }()
             if configuredDouble || nativeCopyDouble {
@@ -1096,52 +1114,85 @@ class RemoteInputHandler {
             nativePushToTalkUsesBaseTap.remove(buttonName)
             return
         }
-        // Release AFTER the opener fired → fire the closing hotkey (dictation off).
-        if !pressed, let keys = pushToTalkOpen.removeValue(forKey: buttonName) {
-            Keys.synthesize(keys)
+        // Release AFTER the opener fired → release the held hotkey (dictation off).
+        if !pressed, let held = pushToTalkOpen.removeValue(forKey: buttonName) {
+            Keys.holdEnd(held.combo)
+            if let releaseKeys = held.onRelease, !releaseKeys.isEmpty {
+                Keys.synthesize(releaseKeys)
+            }
             onContinuousActionEnded?(tapKey)
-            print("🔘 \(tapKey) → pushToTalk '\(keys)' (release edge)")
+            print("🔘 \(tapKey) → pushToTalk release edge")
             return
         }
-        // Press → SCHEDULE the opener for `pushToTalkActivationDelay` later. Only if the button is
-        // still held then does it fire and "open" the pair (so the release fires the matching close).
-        // `keys` is captured at press time so both edges use the SAME combo even if the binding
-        // resolves differently mid-hold (a layer/mode change, a config hot-reload).
+        // A base push-to-talk action schedules its opener after `pushToTalkActivationDelay`; only
+        // if the button is still held then does it fire and open the pair. Siri's dedicated Hold
+        // slot takes the immediate path below. `keys` and `onRelease` are captured at press time so
+        // both edges use the SAME binding even if a layer/mode/config changes mid-hold.
         let resolvedBase = pressed ? controller.resolvedAction(for: tapKey) : nil
-        let configuredPushToTalkKeys: String? = {
-            if case let .pushToTalk(keys)? = resolvedBase { return keys }
+        let configuredBasePushToTalk: PushToTalkBinding? = {
+            if case let .pushToTalk(keys, onPress, onRelease, switchToApp)? = resolvedBase {
+                return PushToTalkBinding(
+                    keys: keys, onPress: onPress, onRelease: onRelease, switchToApp: switchToApp)
+            }
             return nil
         }()
+        // A push-to-talk action may also live in the Siri button's `.hold` slot. That slot is an
+        // explicit press-and-hold mapping, so it opens on the physical press edge instead of
+        // waiting for the generic long-press threshold. The same combo stays down until the
+        // physical release; this deliberately bypasses `.hold2`/`.hold3` for that button.
+        let configuredHoldPushToTalk: PushToTalkBinding? = {
+            guard pressed, configuredBasePushToTalk == nil else { return nil }
+            if case let .pushToTalk(keys, onPress, onRelease, switchToApp)? =
+                    controller.resolvedAction(for: tapKey + ".hold") {
+                return PushToTalkBinding(
+                    keys: keys, onPress: onPress, onRelease: onRelease, switchToApp: switchToApp)
+            }
+            return nil
+        }()
+        let configuredPushToTalk = configuredBasePushToTalk ?? configuredHoldPushToTalk
         let nativeRequested = pressed && Self.nativeDictationClaims(
             tapKey, enabled: shouldUseNativeDictation?() == true
         )
-        let configuredPushToTalk = configuredPushToTalkKeys != nil
+        let hasConfiguredPushToTalk = configuredPushToTalk != nil
         let nativeHandled = Controller.HandledAction(
             key: tapKey,
-            action: .pushToTalk(keys: configuredPushToTalkKeys ?? ""),
-            presentation: configuredPushToTalk
+            action: .pushToTalk(
+                keys: configuredPushToTalk?.keys ?? "",
+                onPress: configuredPushToTalk?.onPress,
+                onRelease: configuredPushToTalk?.onRelease,
+                switchToApp: configuredPushToTalk?.switchToApp
+            ),
+            presentation: hasConfiguredPushToTalk
                 ? controller.resolvedPresentation(for: tapKey)
                 : .init(label: L("Voice Input"), icon: "waveform")
         )
         // Capture this before calling out. Even if future target preparation regresses into a slow
         // callback, promotion remains anchored to the physical press rather than callback return.
-        let activationDeadline = DispatchTime.now() + pushToTalkActivationDelay
+        let immediateHoldPushToTalk = configuredHoldPushToTalk != nil
+        let activationDelay = immediateHoldPushToTalk ? 0 : pushToTalkActivationDelay
+        let activationDeadline = DispatchTime.now() + activationDelay
         let admission = nativeRequested
             ? (onNativeDictationPrimed?(nativeHandled) ?? .unavailable) : .unavailable
         let nativeRoute = Self.nativeDictationPressRoute(
-            admission: admission, configuredPushToTalk: configuredPushToTalk
+            admission: admission, configuredPushToTalk: hasConfiguredPushToTalk
         )
         let useNative = nativeRoute == .native
         let suppressExternalForBusyNative = nativeRoute == .busyConsumed
         let showNativeConfigurationError = admission == .misconfigured
         let usesNativeRoute = useNative || suppressExternalForBusyNative
-        if pressed, nativeRoute != .ordinary {
-            let keys = configuredPushToTalkKeys ?? ""
+        if pressed, nativeRoute != .ordinary || configuredHoldPushToTalk != nil {
+            let keys = configuredPushToTalk?.keys ?? ""
             let handled = usesNativeRoute ? nativeHandled : Controller.HandledAction(
-                key: tapKey, action: .pushToTalk(keys: keys),
+                key: tapKey,
+                action: .pushToTalk(
+                    keys: keys,
+                    onPress: configuredPushToTalk?.onPress,
+                    onRelease: configuredPushToTalk?.onRelease,
+                    switchToApp: configuredPushToTalk?.switchToApp
+                ),
                 presentation: controller.resolvedPresentation(for: tapKey)
             )
-            if usesNativeRoute && !configuredPushToTalk {
+            if usesNativeRoute && !hasConfiguredPushToTalk {
                 nativePushToTalkUsesBaseTap.insert(buttonName)
             } else {
                 nativePushToTalkUsesBaseTap.remove(buttonName)
@@ -1177,21 +1228,39 @@ class RemoteInputHandler {
                         self.onNativeDictationMisconfigured?()
                     }
                 } else {
-                    self.pushToTalkOpen[buttonName] = keys
-                    Keys.synthesize(keys)
+                    if let target = configuredPushToTalk?.switchToApp {
+                        Self.activateConfiguredApp(target)
+                    }
+                    if let pressKeys = configuredPushToTalk?.onPress, !pressKeys.isEmpty {
+                        Keys.synthesize(pressKeys)
+                    }
+                    if let combo = Keys.holdBegin(keys) {
+                        self.pushToTalkOpen[buttonName] = OpenPushToTalk(
+                            combo: combo,
+                            onRelease: configuredPushToTalk?.onRelease
+                        )
+                    }
                 }
-                // This raw-edge fast path deliberately bypasses Controller.handle. It is not a
-                // short notification: announce a continuous action only once the delayed opener
-                // genuinely fires, then keep it alive until the matching release callback above.
-                // A quick tap therefore shows only its `.tap`/`.double` action, never voice input.
+                // This raw-edge fast path deliberately bypasses Controller.handle. It announces a
+                // continuous action only once the opener genuinely fires, then keeps it alive until
+                // the matching release callback above. A base push-to-talk quick tap still follows
+                // the existing tap/double fallback; Siri's immediate Hold mapping consumes it.
                 if !usesNativeRoute { self.onContinuousActionBegan?(handled) }
                 let route = useNative ? "native dictation"
                     : (suppressExternalForBusyNative ? "native dictation busy (consumed)"
                        : "pushToTalk '\(keys)'")
-                print("🔘 \(tapKey) → \(route) (press edge, +\(self.pushToTalkActivationDelay)s)")
+                print("🔘 \(tapKey) → \(route) (press edge, +\(activationDelay)s)")
             }
-            pushToTalkPending[buttonName] = work
-            DispatchQueue.main.asyncAfter(deadline: activationDeadline, execute: work)
+            if immediateHoldPushToTalk {
+                // This binding is already in the dedicated Siri Hold slot. Execute synchronously
+                // so the first key-down event is emitted on the same input edge as the remote
+                // press; a generic hold timer would add the visible ~0.5–1 s delay the user does
+                // not want for push-to-talk.
+                work.perform()
+            } else {
+                pushToTalkPending[buttonName] = work
+                DispatchQueue.main.asyncAfter(deadline: activationDeadline, execute: work)
+            }
             return
         }
 
@@ -1901,6 +1970,24 @@ class RemoteInputHandler {
         }
     }
 
+    /// Activate a running application selected in the Layout editor. Config stores the bundle
+    /// identifier, which is stable across localized display names; accepting a display name here
+    /// keeps hand-written configs from older builds useful as well.
+    static func activateConfiguredApp(_ identifierOrName: String) {
+        let query = identifierOrName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return }
+        let running = NSWorkspace.shared.runningApplications
+        let match = running.first { $0.bundleIdentifier == query }
+            ?? running.first {
+                $0.localizedName?.caseInsensitiveCompare(query) == .orderedSame
+            }
+        guard let app = match else {
+            NSLog("[siriRemote] configured app is not running: %@", query)
+            return
+        }
+        app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+    }
+
     /// Enabling App-native dictation claims only the physical Siri/side button. This deliberately
     /// does not inspect the resolved binding: the Settings switch must work with a fresh, empty
     /// config, while every other button continues through the ordinary mapping engine.
@@ -2096,8 +2183,8 @@ class RemoteInputHandler {
         pushToTalkSingleTapPending.removeValue(forKey: buttonName)?.cancel()
         pushToTalkTapTime[buttonName] = nil
         pushToTalkSecondTapCandidate.remove(buttonName)
-        if let keys = pushToTalkOpen.removeValue(forKey: buttonName) {
-            Keys.synthesize(keys)
+        if let held = pushToTalkOpen.removeValue(forKey: buttonName) {
+            Keys.holdEnd(held.combo)
             onContinuousActionEnded?(RemoteInputHandler.configKey(for: buttonName))
         }
 

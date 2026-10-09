@@ -1,11 +1,35 @@
 import Foundation
 
+/// One keyboard chord in a macro. `delay` is the number of seconds to wait after this chord
+/// before synthesizing the next one. The final step's delay is ignored.
+public struct MacroStep: Equatable, Codable {
+    public var keys: String
+    public var delay: Double
+
+    public init(keys: String, delay: Double = 0.1) {
+        self.keys = keys
+        self.delay = max(0, delay)
+    }
+
+    private enum CodingKeys: String, CodingKey { case keys, delay }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            keys: try container.decode(String.self, forKey: .keys),
+            delay: try container.decodeIfPresent(Double.self, forKey: .delay) ?? 0.1
+        )
+    }
+}
+
 public enum Action: Equatable {
     case keystroke(keys: String)
-    // Push-to-talk: fire `keys` on the button's PRESS edge AND again on its RELEASE edge,
-    // immediately, bypassing tap/double/hold/taphold discrimination and auto-repeat entirely
-    // (see RemoteInputHandler.routeButton). Built for toggle hotkeys — press = ON, release = OFF.
-    case pushToTalk(keys: String)
+    // Run several keyboard chords in order, waiting each step's `delay` before the next one.
+    case macro(steps: [MacroStep])
+    // Push-to-talk: optionally switch to an app and press `onPress`, then hold `keys` until the
+    // physical button is released. Release the held keys and synthesize `onRelease` once. This
+    // bypasses tap/double/hold/taphold discrimination and auto-repeat (see RemoteInputHandler).
+    case pushToTalk(keys: String, onPress: String?, onRelease: String?, switchToApp: String?)
     case media(key: String)
     case mouse(op: String)
     case launch(app: String?, url: String?)
@@ -43,13 +67,30 @@ public enum Action: Equatable {
 }
 
 public extension Action {
+    /// Source-compatible shorthand for a push-to-talk action without a release shortcut.
+    static func pushToTalk(keys: String) -> Action {
+        .pushToTalk(keys: keys, onPress: nil, onRelease: nil, switchToApp: nil)
+    }
+
+    /// Source-compatible shorthand for a push-to-talk action with a release shortcut.
+    static func pushToTalk(keys: String, onRelease: String?) -> Action {
+        .pushToTalk(keys: keys, onPress: nil, onRelease: onRelease, switchToApp: nil)
+    }
+
     /// A short, human-readable label for this action, for display in the settings UI.
     /// Pragmatic, not exhaustive — keystrokes render modifier symbols, media/mouse/space get
     /// friendly names, `shell`/`applescript`/`launch` are summarised.
     var displayLabel: String {
         switch self {
         case .keystroke(let keys):      return ActionLabel.keystroke(keys)
-        case .pushToTalk(let keys):     return ActionLabel.keystroke(keys) + " ⇅"
+        case .macro(let steps):
+            let labels = steps.map { ActionLabel.keystroke($0.keys) }
+            return labels.isEmpty ? "Macro" : labels.joined(separator: " → ")
+        case .pushToTalk(let keys, let onPress, let onRelease, let switchToApp):
+            let release = onRelease.map { " → " + ActionLabel.keystroke($0) } ?? ""
+            let press = onPress.map { " + " + ActionLabel.keystroke($0) } ?? ""
+            let app = switchToApp == nil ? "" : " ⇥"
+            return ActionLabel.keystroke(keys) + app + press + " ⇅" + release
         case .media(let key):           return ActionLabel.media(key)
         case .mouse(let op):            return ActionLabel.mouse(op)
         case .launch(let app, let url): return app ?? url ?? "Launch"
@@ -138,6 +179,7 @@ private enum ActionLabel {
 
     static func mouse(_ op: String) -> String {
         switch op.lowercased() {
+        case "disabled":  return "Disabled"
         case "click":      return "Click"
         case "rightclick": return "Right-click"
         case "move":       return "Move"
@@ -184,13 +226,26 @@ private enum ActionLabel {
 
 extension Action: Decodable {
     private enum K: String, CodingKey {
-        case action, keys, key, op, app, url, command, script, to, delay, interval, value
+        case action, keys, onPress, onRelease, switchToApp, steps, key, op, app, url, command, script, to, delay, interval, value
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: K.self)
         switch try c.decode(String.self, forKey: .action) {
         case "keystroke":   self = .keystroke(keys: try c.decode(String.self, forKey: .keys))
-        case "pushToTalk":  self = .pushToTalk(keys: try c.decode(String.self, forKey: .keys))
+        case "macro":       self = .macro(steps: try c.decode([MacroStep].self, forKey: .steps))
+        case "pushToTalk":
+            let onPress = try c.decodeIfPresent(String.self, forKey: .onPress)
+            let onRelease = try c.decodeIfPresent(String.self, forKey: .onRelease)
+            let switchToApp = try c.decodeIfPresent(String.self, forKey: .switchToApp)
+            self = .pushToTalk(
+                keys: try c.decode(String.self, forKey: .keys),
+                onPress: onPress?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == true
+                    ? nil : onPress,
+                onRelease: onRelease?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == true
+                    ? nil : onRelease,
+                switchToApp: switchToApp?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == true
+                    ? nil : switchToApp
+            )
         case "media":       self = .media(key: try c.decode(String.self, forKey: .key))
         case "mouse":       self = .mouse(op: try c.decode(String.self, forKey: .op))
         case "launch":      self = .launch(app: try c.decodeIfPresent(String.self, forKey: .app),
@@ -228,9 +283,15 @@ extension Action: Encodable {
         case .keystroke(let keys):
             try c.encode("keystroke", forKey: .action)
             try c.encode(keys, forKey: .keys)
-        case .pushToTalk(let keys):
+        case .macro(let steps):
+            try c.encode("macro", forKey: .action)
+            try c.encode(steps, forKey: .steps)
+        case .pushToTalk(let keys, let onPress, let onRelease, let switchToApp):
             try c.encode("pushToTalk", forKey: .action)
             try c.encode(keys, forKey: .keys)
+            try c.encodeIfPresent(onPress, forKey: .onPress)
+            try c.encodeIfPresent(onRelease, forKey: .onRelease)
+            try c.encodeIfPresent(switchToApp, forKey: .switchToApp)
         case .media(let key):
             try c.encode("media", forKey: .action)
             try c.encode(key, forKey: .key)

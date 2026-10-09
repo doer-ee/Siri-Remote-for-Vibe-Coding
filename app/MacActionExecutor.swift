@@ -23,6 +23,8 @@ final class MacActionExecutor: ActionExecutor {
         switch action {
         case .keystroke(let keys):
             Keys.synthesize(keys)
+        case .macro(let steps):
+            Keys.synthesizeMacro(steps)
         case .media(let key):
             postMedia(key)
         case .mouse(let op):
@@ -44,10 +46,10 @@ final class MacActionExecutor: ActionExecutor {
             WindowControl.close()
         case .appWheel:
             onAppWheel?()
-        case .pushToTalk(let keys):
-            // The press/release edge dispatch lives in RemoteInputHandler (both edges fire the
-            // combo there and never reach the executor). This handles a stray dispatch — e.g. the
-            // action bound to a swipe/tap, which has no release edge — as a single keystroke.
+        case .pushToTalk(let keys, _, _, _):
+            // The press/release lifetime lives in RemoteInputHandler. This handles a stray
+            // dispatch, such as the action bound to a swipe/tap with no release edge, as a single
+            // keystroke.
             Keys.synthesize(keys)
         case .repeatKey(let keys, _, _):
             // The auto-repeat cadence is driven by RemoteInputHandler (press starts the repeat,
@@ -123,6 +125,28 @@ enum Keys {
             e?.flags = f
             e?.post(tap: .cghidEventTap)
         }
+    }
+
+    /// Synthesize the first macro step immediately, then schedule each following step after the
+    /// delay attached to its predecessor. This keeps the press edge responsive without blocking
+    /// the HID/input run loop while a macro is waiting.
+    static func synthesizeMacro(_ steps: [MacroStep]) {
+        guard !steps.isEmpty else { return }
+        func run(_ index: Int) {
+            guard index < steps.count else { return }
+            let step = steps[index]
+            synthesize(step.keys)
+            guard index + 1 < steps.count else { return }
+            let delay = max(0, step.delay)
+            if delay == 0 {
+                run(index + 1)
+            } else {
+                DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + delay) {
+                    run(index + 1)
+                }
+            }
+        }
+        run(0)
     }
 
     // MARK: - Held keys (true auto-repeat, not rapid re-tapping)

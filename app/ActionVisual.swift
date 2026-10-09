@@ -264,6 +264,7 @@ enum ActionVisual {
     private static func defaultSymbolName(_ action: Action) -> String {
         switch action {
         case .keystroke(let keys): return keystrokeSymbolName(keys)
+        case .macro:        return "rectangle.stack"
         case .pushToTalk:  return "mic.fill"
         case .media(let key):
             switch key.lowercased() {
@@ -276,6 +277,7 @@ enum ActionVisual {
             }
         case .mouse(let op):
             switch op.lowercased() {
+            case "disabled": return "nosign"
             case "move": return "cursorarrow.motionlines"
             case "scroll": return "arrow.up.and.down"
             case "rightclick": return "cursorarrow.click.2"

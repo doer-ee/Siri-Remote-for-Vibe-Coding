@@ -474,14 +474,20 @@ Suffix any button/ring key with:
   coming. No other key is affected, and the plain tap is never delayed by either.
 - **`.hold` / `.hold2` / `.hold3`** — multi-stage long-press (`ring.up.hold`). *Release-to-select:*
   keep holding to reach a deeper stage; the deepest stage reached fires when you let go.
+  The Siri/Voice button exposes only one Hold slot in Layout. If that slot uses `pushToTalk`,
+  the configured shortcut is pressed immediately with the Siri button and remains physically held
+  until the button is released; `hold2`/`hold3` cannot take over that button.
 
 ### Actions
 
 | `action`      | params                                | notes |
 |---------------|---------------------------------------|-------|
 | `keystroke`   | `keys` e.g. `"cmd+shift+["`            | modifiers cmd/ctrl/opt/shift (+ `l`/`r` variants like `rcmd`); a modifier-only string is a held hyperkey chord; keys: letters, digits, arrows, esc/enter/space/tab, punctuation |
+| `macro`       | `steps`: `{ "keys", "delay" }[]`       | synthesize each shortcut in order; `delay` is the seconds between that step and the next. Example: `{ "action": "macro", "steps": [{ "keys": "cmd+k", "delay": 0.1 }, { "keys": "cmd+c" }] }` |
+| `pushToTalk`  | `keys`, optional `switchToApp`, `onPress`, `onRelease` | when the button is pressed, activate the selected running app, synthesize `onPress`, and hold `keys`; release `keys` on button release, then synthesize `onRelease` once if configured. In Siri's Hold slot, the opener is the physical press edge. `switchToApp` stores a bundle identifier. Example: `{ "action": "pushToTalk", "switchToApp": "com.openai.codex", "onPress": "cmd+1", "keys": "ctrl+m", "onRelease": "enter" }` |
 | `media`       | `key`                                 | playpause/next/previous/volup/voldown/mute |
 | `mouse`       | `op`                                  | click/rightclick/move/scroll |
+| `mouse`       | `op: "disabled"`                     | ignore the entire touch surface (movement, scroll, swipes and taps) |
 | `launch`      | `app` and/or `url`                    | open an app or a URL |
 | `shell`       | `command`                             | runs via `/bin/zsh -c` — the escape hatch |
 | `applescript` | `script`                             | e.g. control Apple Music |

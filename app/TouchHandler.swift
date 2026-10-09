@@ -75,6 +75,9 @@ class TouchHandler {
     }
     
     private let cursorController: CursorController
+    /// When false, the entire touch surface is ignored (movement, scrolling, swipes and taps).
+    /// The HID device stays attached so buttons and the Siri microphone continue to work.
+    private var touchInputEnabled = true
     private var devices: [UInt64: MTDevice] = [:]
     private var activeTouchDevice = ActiveTouchDeviceTracker<UInt64>()
     private let touchStateLock = NSLock()
@@ -214,6 +217,19 @@ class TouchHandler {
 
     init(cursorController: CursorController) {
         self.cursorController = cursorController
+    }
+
+    /// Toggle surface handling without disconnecting the underlying multitouch device.
+    /// Callers normally update this on the main thread; the value is read while the callback lock
+    /// is held, so a config hot-reload cannot leave a half-reset gesture behind.
+    func setTouchInputEnabled(_ enabled: Bool) {
+        touchStateLock.lock()
+        touchInputEnabled = enabled
+        if !enabled {
+            activeTouchDevice.reset()
+            resetTouchSessionWithoutAction()
+        }
+        touchStateLock.unlock()
     }
     
     deinit {
@@ -434,6 +450,14 @@ class TouchHandler {
         let sourceID = deviceID(device)
         touchStateLock.lock()
         defer { touchStateLock.unlock() }
+
+        guard touchInputEnabled else {
+            // Keep publishing no gestures while disabled. Resetting the session here also clears
+            // any contact that was already down when the user selected Disable in Layout.
+            activeTouchDevice.reset()
+            resetTouchSessionWithoutAction()
+            return
+        }
 
         if count > 0 {
             if activeTouchDevice.beginOrContinue(sourceID) {

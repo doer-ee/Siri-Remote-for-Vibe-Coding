@@ -20,12 +20,18 @@ final class LayoutSupportTests: XCTestCase {
     func testRepeatKeyLabel() {
         // Reuses the keystroke symbol formatting for the keys, with a repeat glyph appended.
         XCTAssertEqual(Action.repeatKey(keys: "delete", delay: 0.3, interval: 0.045).displayLabel, "⌫ ⟳")
+        XCTAssertEqual(Action.macro(steps: [MacroStep(keys: "cmd+k"), MacroStep(keys: "cmd+c")]).displayLabel, "⌘K → ⌘C")
+        XCTAssertEqual(Action.pushToTalk(keys: "ctrl+m", onRelease: "enter").displayLabel, "⌃M ⇅ → ⏎")
+        XCTAssertEqual(
+            Action.pushToTalk(keys: "ctrl+m", onPress: "cmd+1", onRelease: "enter", switchToApp: "com.openai.codex").displayLabel,
+            "⌃M ⇥ + ⌘1 ⇅ → ⏎")
     }
 
     func testMediaMouseSpaceModeLabels() {
         XCTAssertEqual(Action.media(key: "playpause").displayLabel, "Play / Pause")
         XCTAssertEqual(Action.media(key: "volup").displayLabel, "Volume +")
         XCTAssertEqual(Action.mouse(op: "click").displayLabel, "Click")
+        XCTAssertEqual(Action.mouse(op: "disabled").displayLabel, "Disabled")
         XCTAssertEqual(Action.space(direction: -1).displayLabel, "Space ←")
         XCTAssertEqual(Action.space(direction: 1).displayLabel, "Space →")
         XCTAssertEqual(Action.mode(to: "music").displayLabel, "Mode: music")

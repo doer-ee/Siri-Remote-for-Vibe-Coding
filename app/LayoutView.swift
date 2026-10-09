@@ -637,7 +637,17 @@ struct LayoutView: View {
 
     private struct Slot { let slotKey: String; let label: String }
     private func slots(for base: String) -> [Slot] {
+        if base == "touch" {
+            return [Slot(slotKey: base, label: L("Action"))]
+        }
         if base.hasPrefix("ring.") || base.hasPrefix("button.") {
+            if base == "button.siri" {
+                return [
+                    Slot(slotKey: base,             label: L("Tap")),
+                    Slot(slotKey: base + ".double", label: L("Double-tap")),
+                    Slot(slotKey: base + ".hold",   label: L("Hold")),
+                ]
+            }
             return [
                 Slot(slotKey: base,             label: L("Tap")),
                 Slot(slotKey: base + ".double", label: L("Double-tap")),
@@ -658,7 +668,15 @@ struct LayoutView: View {
     }
 
     private func saveSlot(_ slotKey: String, _ action: Action?) {
-        onSave?(config.setBinding(keyFor(slotKey), to: action, inMode: mode))
+        var updated = config.setBinding(keyFor(slotKey), to: action, inMode: mode)
+        // Siri's Hold slot is a continuous push-to-talk gesture in the editor. Remove any legacy
+        // deeper stages when this button is edited so a stale `.hold2`/`.hold3` cannot reappear in
+        // the runtime after a config migration.
+        if slotKey == "button.siri" || slotKey.hasPrefix("button.siri.") {
+            updated = updated.setBinding(keyFor("button.siri.hold2"), to: nil, inMode: mode)
+            updated = updated.setBinding(keyFor("button.siri.hold3"), to: nil, inMode: mode)
+        }
+        onSave?(updated)
     }
 
     static func inputName(_ key: String) -> String {
@@ -726,7 +744,7 @@ private struct ActionSlotEditor: View {
     let onChange: (Action?) -> Void
 
     enum Kind: String, CaseIterable, Identifiable {
-        case none = "None", keystroke = "Keystroke", pushToTalk = "Push to talk",
+        case none = "None", disabled = "Disabled", keystroke = "Keystroke", macro = "Macro", pushToTalk = "Push to talk",
              media = "Media", mouse = "Mouse",
              launchApp = "Launch app", openURL = "Open URL", shell = "Shell",
              applescript = "AppleScript", space = "Switch space", brightness = "Brightness",
@@ -739,6 +757,11 @@ private struct ActionSlotEditor: View {
 
     @State private var kind: Kind = .none
     @State private var text: String = ""
+    @State private var macroSteps: [MacroStepDraft] = []
+    @State private var onPressText: String = ""
+    @State private var releaseText: String = ""
+    @State private var switchToApp: String = ""
+    @State private var runningApps: [RunningAppChoice] = []
     @State private var pick: String = ""
     @State private var value: Double = 0
     // Preserved so editing one field of a multi-field action doesn't reset the others (#8):
@@ -754,16 +777,24 @@ private struct ActionSlotEditor: View {
             // so a leftover value from the old type can't be written as the new type (e.g. keystroke
             // "up" → shell "up", which would then EXECUTE `up`).
             Picker("", selection: Binding(get: { kind }, set: { newKind in
+                // Remove the previous action before changing any editor state. This closes the
+                // small window in which a populated macro could otherwise survive the picker
+                // transition and be executed again during the config reload.
+                if kind != newKind { onChange(nil) }
                 kind = newKind
                 resetParamsForKind()
-                // Persist immediately only for kinds that are already complete (None = remove, or a
-                // picker/brightness default). Text kinds start EMPTY — committing now would write a
-                // destructive removal; wait for the user to type (commit on submit / focus-loss).
-                if newKind == .none || build() != nil { commit() }
+                // Clear the old binding immediately. Keeping a completed macro alive while its
+                // editor is being changed is dangerous: a macro containing cmd+q (or another
+                // destructive chord) could run during the config reload before the new field is
+                // recorded. Text based actions intentionally start empty and are written once the
+                // user records their first shortcut.
+                commit()
             })) {
                 Text(L(Kind.none.rawValue)).tag(Kind.none)
+                Text(L(Kind.disabled.rawValue)).tag(Kind.disabled)
                 Section(L("Keys & media")) {
                     Text(L(Kind.keystroke.rawValue)).tag(Kind.keystroke)
+                    Text(L(Kind.macro.rawValue)).tag(Kind.macro)
                     Text(L(Kind.pushToTalk.rawValue)).tag(Kind.pushToTalk)
                     Text(L(Kind.repeatKey.rawValue)).tag(Kind.repeatKey)
                     Text(L(Kind.media.rawValue)).tag(Kind.media)
@@ -789,7 +820,10 @@ private struct ActionSlotEditor: View {
             .labelsHidden().frame(width: 128)
             param
         }
-        .onAppear(perform: load)
+        .onAppear {
+            load()
+            refreshRunningApps()
+        }
         // Commit text fields when focus LEAVES (not only on Enter) — otherwise typing a value then
         // clicking another row (which changes this editor's `.id` and discards its @State) loses it.
         .onChange(of: focused) { isFocused in if !isFocused { commit() } }
@@ -799,6 +833,8 @@ private struct ActionSlotEditor: View {
         switch kind {
         case .none:
             Text(L("does nothing")).foregroundStyle(.secondary).font(.system(size: 12))
+        case .disabled:
+            Text(L("ignores the touch surface")).foregroundStyle(.secondary).font(.system(size: 12))
         case .fullscreen:
             Text(L("toggles the frontmost window")).foregroundStyle(.secondary).font(.system(size: 12))
         case .minimize:
@@ -809,11 +845,69 @@ private struct ActionSlotEditor: View {
             Text(L("opens the radial launcher (settings.appWheel)")).foregroundStyle(.secondary).font(.system(size: 12))
         case .keystroke, .repeatKey:
             ShortcutRecorderField(value: text, onCommit: commitShortcut)
+        case .macro:
+            VStack(alignment: .leading, spacing: 5) {
+                // Render values, not bindings into the array. A collection binding can retain an
+                // old index for one SwiftUI transaction after a row is removed and trap in its
+                // getter before the new Macro/Keystroke editor has rendered.
+                ForEach(Array(macroSteps.enumerated()), id: \.element.id) { index, step in
+                    MacroStepRow(
+                        step: step,
+                        index: index,
+                        isLast: index == macroSteps.count - 1,
+                        onKeys: { updateMacroKeys(step.id, $0) },
+                        onDelay: { updateMacroDelay(step.id, $0) },
+                        onRemove: { removeMacroStep(id: step.id) }
+                    )
+                }
+                Button {
+                    addMacroStep()
+                } label: {
+                    Label(L("Add macro step"), systemImage: "plus.circle")
+                        .font(.system(size: 11))
+                }
+                .buttonStyle(.plain)
+            }
         case .pushToTalk:
-            HStack(spacing: 8) {
-                ShortcutRecorderField(value: text, onCommit: commitShortcut)
-                Text(L("fires on press AND on release"))
-                    .font(.system(size: 10)).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(L("Switch to"))
+                        .font(.system(size: 10)).foregroundStyle(.secondary)
+                    Picker("", selection: Binding(get: { switchToApp }, set: {
+                        switchToApp = $0
+                        commit()
+                    })) {
+                        Text(L("Current app")).tag("")
+                        ForEach(runningApps) { app in
+                            Text(app.name).tag(app.bundleIdentifier)
+                        }
+                    }
+                    .labelsHidden().frame(width: 180)
+                    Button {
+                        refreshRunningApps()
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .buttonStyle(.plain)
+                    .help(L("Refresh running apps"))
+                }
+                HStack(spacing: 8) {
+                    Text(L("On press"))
+                        .font(.system(size: 10)).foregroundStyle(.secondary)
+                    ShortcutRecorderField(value: onPressText, onCommit: commitOnPressShortcut)
+                }
+                HStack(spacing: 8) {
+                    Text(L("Hold"))
+                        .font(.system(size: 10)).foregroundStyle(.secondary)
+                    ShortcutRecorderField(value: text, onCommit: commitShortcut)
+                    Text(L("holds while the button is held"))
+                        .font(.system(size: 10)).foregroundStyle(.secondary)
+                }
+                HStack(spacing: 8) {
+                    Text(L("Press on release"))
+                        .font(.system(size: 10)).foregroundStyle(.secondary)
+                    ShortcutRecorderField(value: releaseText, onCommit: commitReleaseShortcut)
+                }
             }
         case .shell:
             TextField(L("shell command"), text: $text).textFieldStyle(.roundedBorder).frame(width: 240)
@@ -861,10 +955,27 @@ private struct ActionSlotEditor: View {
     }
 
     private func load() {
-        guard let a = action else { kind = .none; return }
+        guard let a = action else {
+            kind = .none
+            text = ""
+            macroSteps = []
+            onPressText = ""
+            releaseText = ""
+            switchToApp = ""
+            return
+        }
         switch a {
+        case .mouse(let op) where op.lowercased() == "disabled": kind = .disabled
         case .keystroke(let k):       kind = .keystroke; text = k
-        case .pushToTalk(let k):      kind = .pushToTalk; text = k
+        case .macro(let steps):
+            kind = .macro
+            macroSteps = steps.map { MacroStepDraft(keys: $0.keys, delayText: String(format: "%.2f", $0.delay)) }
+        case .pushToTalk(let k, let onPress, let release, let app):
+            kind = .pushToTalk
+            text = k
+            onPressText = onPress ?? ""
+            releaseText = release ?? ""
+            switchToApp = app ?? ""
         case .media(let k):           kind = .media; pick = k
         case .mouse(let op):          kind = .mouse; pick = op
         case .launch(let app, let url):
@@ -889,7 +1000,8 @@ private struct ActionSlotEditor: View {
     /// On a type change, clear params so a leftover value from the previous type is never written as
     /// the new type; seed sensible defaults for the picker-based types.
     private func resetParamsForKind() {
-        text = ""; altLaunch = ""; repDelay = 0.3; repInterval = 0.045; value = 0
+        text = ""; macroSteps = []; onPressText = ""; releaseText = ""; switchToApp = ""
+        altLaunch = ""; repDelay = 0.3; repInterval = 0.045; value = 0
         switch kind {
         case .media:        pick = "playpause"
         case .mouse:        pick = "click"
@@ -898,6 +1010,7 @@ private struct ActionSlotEditor: View {
         case .layer, .mode: pick = modeNames.first ?? "global"
         default:            pick = ""
         }
+        if kind == .macro { macroSteps = [MacroStepDraft()] }
     }
 
     private func commit() { onChange(build()) }
@@ -910,8 +1023,20 @@ private struct ActionSlotEditor: View {
         switch kind {
         case .keystroke:
             onChange(shortcut.isEmpty ? nil : .keystroke(keys: shortcut))
+        case .macro:
+            if let firstID = macroSteps.first?.id {
+                updateMacroKeys(firstID, shortcut)
+            } else if !shortcut.isEmpty {
+                macroSteps = [MacroStepDraft(keys: shortcut)]
+                commitMacro()
+            }
         case .pushToTalk:
-            onChange(shortcut.isEmpty ? nil : .pushToTalk(keys: shortcut))
+            onChange(shortcut.isEmpty ? nil : .pushToTalk(
+                keys: shortcut,
+                onPress: onPressText.isEmpty ? nil : onPressText,
+                onRelease: releaseText.isEmpty ? nil : releaseText,
+                switchToApp: switchToApp.isEmpty ? nil : switchToApp
+            ))
         case .repeatKey:
             onChange(shortcut.isEmpty
                      ? nil
@@ -921,11 +1046,78 @@ private struct ActionSlotEditor: View {
         }
     }
 
+    private func commitOnPressShortcut(_ shortcut: String) {
+        onPressText = shortcut
+        guard !text.isEmpty else { return }
+        onChange(.pushToTalk(
+            keys: text,
+            onPress: shortcut.isEmpty ? nil : shortcut,
+            onRelease: releaseText.isEmpty ? nil : releaseText,
+            switchToApp: switchToApp.isEmpty ? nil : switchToApp
+        ))
+    }
+
+    private func updateMacroKeys(_ id: UUID, _ shortcut: String) {
+        guard let index = macroSteps.firstIndex(where: { $0.id == id }) else { return }
+        macroSteps[index].keys = shortcut
+        commitMacro()
+    }
+
+    private func updateMacroDelay(_ id: UUID, _ delayText: String) {
+        guard let index = macroSteps.firstIndex(where: { $0.id == id }) else { return }
+        macroSteps[index].delayText = delayText
+        commitMacro()
+    }
+
+    private func addMacroStep() {
+        if macroSteps.isEmpty {
+            macroSteps = [MacroStepDraft()]
+        } else {
+            macroSteps.append(MacroStepDraft())
+        }
+    }
+
+    private func removeMacroStep(id: UUID) {
+        guard let index = macroSteps.firstIndex(where: { $0.id == id }) else { return }
+        macroSteps.remove(at: index)
+        commitMacro()
+    }
+
+    private func commitMacro() {
+        let steps = macroSteps
+            .filter { !$0.keys.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .map { MacroStep(keys: $0.keys, delay: max(0, Double($0.delayText) ?? 0.1)) }
+        onChange(steps.isEmpty ? nil : .macro(steps: steps))
+    }
+
+    private func commitReleaseShortcut(_ shortcut: String) {
+        releaseText = shortcut
+        guard !text.isEmpty else { return }
+        onChange(.pushToTalk(
+            keys: text,
+            onPress: onPressText.isEmpty ? nil : onPressText,
+            onRelease: shortcut.isEmpty ? nil : shortcut,
+            switchToApp: switchToApp.isEmpty ? nil : switchToApp
+        ))
+    }
+
     private func build() -> Action? {
         switch kind {
         case .none:        return nil
+        case .disabled:    return .mouse(op: "disabled")
         case .keystroke:   return text.isEmpty ? nil : .keystroke(keys: text)
-        case .pushToTalk:  return text.isEmpty ? nil : .pushToTalk(keys: text)
+        case .macro:
+            let steps = macroSteps
+                .filter { !$0.keys.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                .map { MacroStep(keys: $0.keys, delay: max(0, Double($0.delayText) ?? 0.1)) }
+            return steps.isEmpty ? nil : .macro(steps: steps)
+        case .pushToTalk:
+            return text.isEmpty ? nil : .pushToTalk(
+                keys: text,
+                onPress: onPressText.isEmpty ? nil : onPressText,
+                onRelease: releaseText.isEmpty ? nil : releaseText,
+                switchToApp: switchToApp.isEmpty ? nil : switchToApp
+            )
         case .repeatKey:   return text.isEmpty ? nil : .repeatKey(keys: text, delay: repDelay, interval: repInterval)
         case .media:       return .media(key: pick.isEmpty ? "playpause" : pick)
         case .mouse:       return .mouse(op: pick.isEmpty ? "click" : pick)
@@ -945,6 +1137,108 @@ private struct ActionSlotEditor: View {
         case .brightnessStep: return .brightnessStep(direction: pick == "down" ? -1 : 1)
         }
     }
+
+    private func refreshRunningApps() {
+        let saved = switchToApp
+        let choices = NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular }
+            .compactMap { app -> RunningAppChoice? in
+                guard let bundleIdentifier = app.bundleIdentifier else { return nil }
+                let trimmedName = app.localizedName?.trimmingCharacters(in: .whitespacesAndNewlines)
+                let name = (trimmedName?.isEmpty == false ? trimmedName : nil) ?? bundleIdentifier
+                return RunningAppChoice(bundleIdentifier: bundleIdentifier, name: name)
+            }
+            .reduce(into: [RunningAppChoice]()) { result, app in
+                if !result.contains(where: { $0.bundleIdentifier == app.bundleIdentifier }) {
+                    result.append(app)
+                }
+            }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        if !saved.isEmpty && !choices.contains(where: { $0.bundleIdentifier == saved }) {
+            let fallbackName = Bundle(identifier: saved)?.localizedInfoDictionary?["CFBundleDisplayName"] as? String
+                ?? Bundle(identifier: saved)?.localizedInfoDictionary?["CFBundleName"] as? String
+                ?? saved
+            runningApps = [RunningAppChoice(bundleIdentifier: saved, name: "\(fallbackName) (not running)")] + choices
+        } else {
+            runningApps = choices
+        }
+    }
+}
+
+private struct MacroStepDraft: Identifiable, Equatable {
+    let id: UUID = UUID()
+    var keys: String = ""
+    var delayText: String = "0.10"
+}
+
+/// A Macro row owns its temporary text field state. It never exposes an Array binding to the
+/// parent, so deleting a neighboring row cannot leave a stale collection subscript in SwiftUI's
+/// update graph.
+private struct MacroStepRow: View {
+    let step: MacroStepDraft
+    let index: Int
+    let isLast: Bool
+    let onKeys: (String) -> Void
+    let onDelay: (String) -> Void
+    let onRemove: () -> Void
+
+    @State private var delayText: String
+    @FocusState private var delayFocused: Bool
+
+    init(step: MacroStepDraft, index: Int, isLast: Bool,
+         onKeys: @escaping (String) -> Void,
+         onDelay: @escaping (String) -> Void,
+         onRemove: @escaping () -> Void) {
+        self.step = step
+        self.index = index
+        self.isLast = isLast
+        self.onKeys = onKeys
+        self.onDelay = onDelay
+        self.onRemove = onRemove
+        _delayText = State(initialValue: step.delayText)
+    }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text("\(index + 1)")
+                .font(.system(size: 10)).foregroundStyle(.secondary)
+                .frame(width: 14, alignment: .trailing)
+            ShortcutRecorderField(value: step.keys, onCommit: onKeys)
+            if !isLast {
+                Text(L("Delay"))
+                    .font(.system(size: 10)).foregroundStyle(.secondary)
+                TextField("0.10", text: $delayText)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 52)
+                    .focused($delayFocused)
+                    .onSubmit { commitDelay() }
+                    .onChange(of: delayFocused) { focused in
+                        if !focused { commitDelay() }
+                    }
+                Text("s").font(.system(size: 10)).foregroundStyle(.secondary)
+            }
+            Button(action: onRemove) {
+                Image(systemName: "minus.circle")
+            }
+            .buttonStyle(.plain)
+            .help(L("Remove macro step"))
+        }
+        .onChange(of: step.delayText) { newValue in
+            if !delayFocused { delayText = newValue }
+        }
+    }
+
+    private func commitDelay() {
+        let normalized = String(format: "%.2f", max(0, Double(delayText) ?? 0.1))
+        delayText = normalized
+        onDelay(normalized)
+    }
+}
+
+private struct RunningAppChoice: Identifiable, Hashable {
+    let bundleIdentifier: String
+    let name: String
+    var id: String { bundleIdentifier }
 }
 
 /// Headless renderer for the Layout tab — used by `HyperVibe --snapshot-layout <path>` so the UI

@@ -1361,9 +1361,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         engineController.onActionHandled = { [weak persistentStatus] handled in
             persistentStatus?.showAction(handled)
         }
-        appWatcher = AppWatcher { [weak engineController, weak persistentStatus] bundleID in
+        appWatcher = AppWatcher { [weak self, weak engineController, weak persistentStatus] bundleID in
             rmDebug("🎯 frontmost app → \(bundleID)")
             engineController?.frontmostAppChanged(bundleID: bundleID)
+            self?.applyTouchInputConfig()
             persistentStatus?.showApplication(bundleID: bundleID)
         }
         configWatcher = ConfigFileWatcher(url: ConfigStore.path) { [weak self] in
@@ -1381,6 +1382,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if let bid = NSWorkspace.shared.frontmostApplication?.bundleIdentifier {
                 self?.controller?.frontmostAppChanged(bundleID: bid)
             }
+            self?.applyTouchInputConfig()
             self?.settingsModel?.config = reloaded   // keep the Layout tab in sync on hot-reload
             self?.appWheel?.configure(apps: reloaded.settings.appWheel)   // and the launcher's app list
             self?.layerHUD?.configure(layers: reloaded.settings.layers,
@@ -1415,6 +1417,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Start touch handler for trackpad (before remote detection so we can wire the callback)
         let touch = TouchHandler(cursorController: cursorController)
         touchHandler = touch
+        applyTouchInputConfig()
         touch.scrollScale = menuBarManager.scrollSpeed.scale
         // The outer-ring gesture is vertical in the base layer and horizontal in Layer 1. Listen to
         // Controller rather than only the sticky-layer HUD callback so momentary L1 holds work too.
@@ -1740,6 +1743,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    /// Apply the active Layout binding for the touch surface. An explicit `mouse(op: "disabled")`
+    /// binding is the opt-out; an unbound touch row keeps the normal cursor/scroll/swipe behavior.
+    private func applyTouchInputConfig() {
+        guard let touch = touchHandler else { return }
+        let disabled: Bool
+        if case .mouse(let op)? = controller?.resolvedAction(for: "touch") {
+            disabled = op.caseInsensitiveCompare("disabled") == .orderedSame
+        } else {
+            disabled = false
+        }
+        touch.setTouchInputEnabled(!disabled)
+    }
+
     /// Push cursor-feel settings from config into the touch handler (also called on hot reload).
     /// Push UI tuning values into the running touch handler (initial + on every settings change).
     private func applyTune(_ t: TuneSettings) {

@@ -16,10 +16,14 @@ final class ConfigWriterTests: XCTestCase {
         let cases: [Action] = [
             .keystroke(keys: "cmd+shift+["),
             .keystroke(keys: "rctrl+rcmd+ropt"),          // modifier-only hyperkey chord
+            .macro(steps: [MacroStep(keys: "cmd+k", delay: 0.1), MacroStep(keys: "cmd+c")]),
             .pushToTalk(keys: "f17"),
             .pushToTalk(keys: "cmd+shift+d"),
+            .pushToTalk(keys: "ctrl+m", onRelease: "enter"),
+            .pushToTalk(keys: "ctrl+m", onPress: "cmd+1", onRelease: "enter", switchToApp: "com.openai.codex"),
             .media(key: "playpause"),
             .mouse(op: "rightclick"),
+            .mouse(op: "disabled"),
             .launch(app: "Safari", url: nil),
             .launch(app: nil, url: "https://example.com/a/b"),
             .launch(app: "Notes", url: "x-notes://showNote"),
@@ -58,6 +62,24 @@ final class ConfigWriterTests: XCTestCase {
         o = try encodeToObject(.pushToTalk(keys: "f17"))
         XCTAssertEqual(o["action"] as? String, "pushToTalk")
         XCTAssertEqual(o["keys"] as? String, "f17")
+        XCTAssertNil(o["onRelease"])
+
+        o = try encodeToObject(.macro(steps: [
+            MacroStep(keys: "cmd+k", delay: 0.1), MacroStep(keys: "cmd+c")
+        ]))
+        XCTAssertEqual(o["action"] as? String, "macro")
+        XCTAssertEqual((o["steps"] as? [[String: Any]])?.count, 2)
+
+        o = try encodeToObject(.pushToTalk(keys: "ctrl+m", onRelease: "enter"))
+        XCTAssertEqual(o["action"] as? String, "pushToTalk")
+        XCTAssertEqual(o["keys"] as? String, "ctrl+m")
+        XCTAssertEqual(o["onRelease"] as? String, "enter")
+
+        o = try encodeToObject(.pushToTalk(
+            keys: "ctrl+m", onPress: "cmd+1", onRelease: "enter", switchToApp: "com.openai.codex"))
+        XCTAssertEqual(o["onPress"] as? String, "cmd+1")
+        XCTAssertEqual(o["onRelease"] as? String, "enter")
+        XCTAssertEqual(o["switchToApp"] as? String, "com.openai.codex")
 
         o = try encodeToObject(.space(direction: -1))
         XCTAssertEqual(o["action"] as? String, "space")
@@ -93,6 +115,22 @@ final class ConfigWriterTests: XCTestCase {
         let o = try encodeToObject(decoded)
         XCTAssertEqual(o["action"] as? String, "pushToTalk")
         XCTAssertEqual(o["keys"] as? String, "f17")
+
+        let withRelease = Data(#"{"action":"pushToTalk","keys":"ctrl+m","onRelease":"enter"}"#.utf8)
+        let decodedWithRelease = try JSONDecoder().decode(Action.self, from: withRelease)
+        XCTAssertEqual(decodedWithRelease, .pushToTalk(keys: "ctrl+m", onRelease: "enter"))
+        let releaseObject = try encodeToObject(decodedWithRelease)
+        XCTAssertEqual(releaseObject["onRelease"] as? String, "enter")
+
+        let complete = Data(#"{"action":"pushToTalk","switchToApp":"com.openai.codex","onPress":"cmd+1","keys":"ctrl+m","onRelease":"enter"}"#.utf8)
+        let decodedComplete = try JSONDecoder().decode(Action.self, from: complete)
+        XCTAssertEqual(decodedComplete, .pushToTalk(
+            keys: "ctrl+m", onPress: "cmd+1", onRelease: "enter", switchToApp: "com.openai.codex"))
+
+        let macro = Data(#"{"action":"macro","steps":[{"keys":"cmd+k","delay":0.1},{"keys":"cmd+c"}]}"#.utf8)
+        XCTAssertEqual(
+            try JSONDecoder().decode(Action.self, from: macro),
+            .macro(steps: [MacroStep(keys: "cmd+k", delay: 0.1), MacroStep(keys: "cmd+c")]))
     }
 
     // MARK: - Config: full round-trip through ConfigWriter + ConfigLoader
