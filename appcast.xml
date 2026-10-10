@@ -10,7 +10,7 @@
     <item>
         <title>Siri Remote for Vibe Coding 1.0.2</title>
         <link>https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases/tag/v1.0.2</link>
-        <pubDate>Fri, 09 Oct 2026 23:16:09 -0500</pubDate>
+        <pubDate>Fri, 09 Oct 2026 23:18:11 -0500</pubDate>
         <sparkle:version>100029000</sparkle:version>
         <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
         <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
@@ -59,9 +59,9 @@ PacketLogger is still a separate prerequisite for remote microphone capture and 
 
         ]]></description>
         <enclosure url="https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases/download/v1.0.2/SiriRemoteVibe-1.0.2-macOS-arm64.zip"
-                   length="4715533"
+                   length="4715521"
                    type="application/octet-stream"
-                   sparkle:edSignature="fujzKW5r+frSFbbA6z0p6OpLB9OoGo44vlaFUqIuelkQhR57EA3jiLJT7NOFmPWZYhlUNifwN577Qb0X3Nv+Aw==" />
+                   sparkle:edSignature="ULcopcHSdLUyk6HtP582p61yvsn9Z1FqFutEopxWsnhcJH9ka8yHWdx5K5uusLbzDcj1WeBttlUEzE6GPlrxCQ==" />
     </item>
         <!-- hypervibe:stable:end -->
         <!-- hypervibe:beta:start -->
@@ -69,6 +69,6 @@ PacketLogger is still a separate prerequisite for remote microphone capture and 
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: bnTQGXFcjH2UnJoDYqDB3KzVptQCnbsLDCZRGMZXhvmDII05sSLho+w8CGCiU57eFYL1bahNH2GY/PLdsjtZDQ==
+edSignature: DmJDqc6Y6PnrEVjupJ9f+WXcK0hyIbZx4pK1ApESgymrEdmO8uWj/3aDdkr0RSmquOlYvy6cPNlgqgb6n/1/AA==
 length: 3913
 -->
