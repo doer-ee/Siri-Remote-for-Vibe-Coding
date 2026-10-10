@@ -73,8 +73,8 @@ which also means an agent or a script can reconfigure the whole device by editin
 > trackpad and Spaces. The current build is therefore unsandboxed and distributed directly rather
 > than through the Mac App Store; a supported public input API and entitlement path would be needed
 > for a conventional sandboxed distribution. Build it
-> yourself or download a GitHub Release. Release builds are ad-hoc signed, not
-> Apple-notarized, and need a one-time right-click → Open. This is a power tool, and it asks for the
+> yourself or download a GitHub Release. Release 1.0.2 uses a persistent self-signed certificate, is not
+> Apple-notarized, and may require right-click → Open on first launch. This is a power tool, and it asks for the
 > permissions it needs: Accessibility and Input Monitoring.
 
 ---
@@ -150,23 +150,23 @@ action.
 
 ---
 
-## Download 1.0.1
+## Download 1.0.2
 
-[Version 1.0.1](https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases/tag/v1.0.1)
-is the first release under **Siri Remote for Vibe Coding**. It provides three Apple-silicon downloads:
+[Version 1.0.2](https://github.com/doer-ee/Siri-Remote-for-Vibe-Coding/releases/tag/v1.0.2)
+adds persistent certificate signing to **Siri Remote for Vibe Coding**. It provides three Apple-silicon downloads:
 
-- **Native Full Installer (recommended)** — open `SiriRemoteVibe-Full-Setup-1.0.1-arm64.pkg`. The standard
+- **Native Full Installer (recommended)** — open `SiriRemoteVibe-Full-Setup-1.0.2-arm64.pkg`. The standard
   macOS Installer places the app, Siri Remote Mic system components, background service and
   uninstaller with one administrator approval. Siri Remote Vibe then opens a live System Check for the
   privacy choices macOS does not let an installer make on the user's behalf.
-- **App only** — unzip `SiriRemoteVibe-1.0.1-macOS-arm64.zip`, move `Siri Remote for Vibe Coding.app` to Applications, then
+- **App only** — unzip `SiriRemoteVibe-1.0.2-macOS-arm64.zip`, move `Siri Remote for Vibe Coding.app` to Applications, then
   right-click → **Open** once.
 - **Legacy Full Setup** — adds the Siri Remote Mic system components and
   `Siri Remote Vibe Uninstall.app`. It asks for an administrator password, briefly restarts system audio,
   and runs a 25-second `coreaudiod` safety check with automatic plug-in rollback.
 
 These packages require macOS 13+ and are currently arm64-only. Source builds can still be made locally. The
-release archives are ad-hoc signed rather than Apple-notarized because the hardened runtime terminates
+release App uses a persistent self-signed certificate and is not Apple-notarized because the hardened runtime terminates
 the private MultitouchSupport callback used by the remote trackpad.
 
 ---
@@ -213,10 +213,11 @@ menu bar and Settings.
 
 The bundle is signed **without** the hardened runtime on purpose — under the hardened runtime the
 private MultitouchSupport touch callback trips code-signing enforcement and the app is killed the
-instant you touch the trackpad. `create_app_bundle.sh` defaults to **ad-hoc signing** for local
-builds (`HYPERVIBE_SIGN_MODE=adhoc`). macOS may require Accessibility and Input Monitoring permission
-again after a rebuild. Stable local signing is optional via `HYPERVIBE_SIGN_MODE=stable`; that mode
-fails if the `siriRemote Local Signing` identity is unavailable.
+instant you touch the trackpad. Builds default to **ad-hoc signing** unless this Mac has opted into
+stable local signing. macOS may require Accessibility and Input Monitoring permission again after
+an ad-hoc rebuild. Stable local signing uses `siriRemote Local Signing` in the login Keychain (or
+the existing dedicated signing Keychain) and fails if that identity is unavailable. See
+[local signing](docs/local-signing.md) for the persistent opt-in and explicit overrides.
 
 ### Software updates
 

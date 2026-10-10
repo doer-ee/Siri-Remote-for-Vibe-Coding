@@ -5,14 +5,15 @@ These rules are non-negotiable for every local macOS App build and test deployme
 1. The only App used for live testing is `/Applications/Siri Remote for Vibe Coding.app`.
 2. After compiling and packaging a user-test build, install that verified bundle at
    `/Applications/Siri Remote for Vibe Coding.app`. Never launch `app/Siri Remote for Vibe Coding.app` as the live App.
-3. Ad-hoc signing is authorized for local development builds on this Mac. The installed App and
-   the October 8 builds use ad-hoc signing. Package with `HYPERVIBE_SIGN_MODE=adhoc` (the default);
-   do not ask again for permission to use this signing mode. macOS permissions may need to be
-   granted again after a rebuild.
+3. The user has requested persistent self-signed local signing on this Mac. Honor
+   `~/.config/siriremote/build-signing-mode` (`stable`) and reuse `siriRemote Local Signing` in
+   the login Keychain for local builds and future releases. Never regenerate that identity or
+   silently fall back to ad-hoc signing: changing identity loses macOS permission continuity.
+   Ad-hoc signing remains authorized when explicitly selected with `HYPERVIBE_SIGN_MODE=adhoc`.
 4. Verify the packaged bundle's signature before replacing the installed App, and verify the
    installed copy before restarting. Stop on any signature verification failure. Stable signing
-   with `siriRemote Local Signing` is optional when explicitly requested and its keychain is
-   available; preserve that identity if present. An explicitly requested stable build must fail
+   with `siriRemote Local Signing` is now requested on this Mac; preserve that identity.
+   A requested stable build must fail
    when its identity is unavailable rather than silently changing signing modes.
 5. Restart only after installation and signature verification, then confirm the single running UI
    process executes `/Applications/Siri Remote for Vibe Coding.app/Contents/MacOS/SiriRemoteVibe`.

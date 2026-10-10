@@ -8,10 +8,9 @@ APP_NAME="SiriRemoteVibe"
 APP_DISPLAY_NAME="Siri Remote for Vibe Coding"
 APP_BUNDLE="${HYPERVIBE_APP_BUNDLE_PATH:-${APP_DISPLAY_NAME}.app}"
 BINARY_PATH="${HYPERVIBE_BINARY_PATH:-$APP_NAME}"
-APP_VERSION="${HYPERVIBE_VERSION:-1.0.1}"
+APP_VERSION="${HYPERVIBE_VERSION:-1.0.2}"
 BUILD_NUMBER="${HYPERVIBE_BUILD_NUMBER:-1}"
 RELEASE_VERSION="${HYPERVIBE_RELEASE_VERSION:-${APP_VERSION}-local.${BUILD_NUMBER}}"
-SIGN_MODE="${HYPERVIBE_SIGN_MODE:-adhoc}"
 SPARKLE_ROOT="$(./prepare_sparkle.sh)"
 SPARKLE_PUBLIC_KEY="$(tr -d '[:space:]' < sparkle-public-key.txt)"
 if ! [[ "$SPARKLE_PUBLIC_KEY" =~ ^[A-Za-z0-9+/]{43}=$ ]]; then
@@ -216,64 +215,8 @@ chmod +x "${APP_BUNDLE}/Contents/XPCServices/HyperVibeCredentialBroker.xpc/Conte
 # but only matter under hardened runtime, so they're harmless here.
 [ -f "SiriRemoteVibe.entitlements" ] || { echo "Error: SiriRemoteVibe.entitlements not found"; exit 1; }
 
-# This fork uses user-authorized ad-hoc signing for local builds by default. Stable self-signed
-# builds are still available explicitly when the dedicated identity exists. Never silently change
-# modes after an explicitly requested stable build fails.
-SIGN_ID="siriRemote Local Signing"
-SIGN_KC="$HOME/Library/Keychains/siriremote-signing.keychain-db"
-CODESIGN_KEYCHAIN_ARGS=()
-if [ "$SIGN_MODE" = "stable" ]; then
-    if [ ! -f "$SIGN_KC" ]; then
-        echo "Error: stable signing keychain not found: $SIGN_KC"
-        echo "Stable signing was requested; refusing to switch signing modes automatically."
-        exit 1
-    fi
-    if ! security find-certificate -c "$SIGN_ID" "$SIGN_KC" >/dev/null 2>&1; then
-        echo "Error: stable signing certificate '$SIGN_ID' is unavailable."
-        echo "Stable signing was requested; refusing to switch signing modes automatically."
-        exit 1
-    fi
-    # Never put a keychain password in argv: process inspection and build logs must not expose it.
-    # Unlock the dedicated keychain through Keychain Access / Security.framework's native secure
-    # prompt before a non-interactive build. `security find-identity` incorrectly reports zero for
-    # this self-signed identity on current macOS even when its private key is usable, so the named
-    # certificate check above plus the real `codesign` operations below are the authoritative gate.
-    CODESIGN_KEYCHAIN_ARGS=(--keychain "$SIGN_KC")
-    echo "Signing with stable local identity ($SIGN_ID)..."
-elif [ "$SIGN_MODE" = "adhoc" ]; then
-    SIGN_ID="-"
-    echo "Ad-hoc signing (local/release build)..."
-else
-    echo "Error: HYPERVIBE_SIGN_MODE must be 'stable' or 'adhoc', got: $SIGN_MODE"
-    exit 1
-fi
-
-# Sparkle's helpers retain hardened runtime even though HyperVibe itself cannot use it. Sign from
-# the deepest nested code outward; --deep is verification-only and is never used to construct a
-# signature because it can hide a malformed framework bundle.
-SPARKLE_B="${APP_BUNDLE}/Contents/Frameworks/Sparkle.framework/Versions/B"
-CREDENTIAL_XPC="${APP_BUNDLE}/Contents/XPCServices/HyperVibeCredentialBroker.xpc"
-codesign --force --sign "$SIGN_ID" "${CODESIGN_KEYCHAIN_ARGS[@]}" \
-    "$CREDENTIAL_XPC"
-codesign --force --options runtime --sign "$SIGN_ID" "${CODESIGN_KEYCHAIN_ARGS[@]}" \
-    "$SPARKLE_B/XPCServices/Installer.xpc"
-codesign --force --options runtime --preserve-metadata=entitlements \
-    --sign "$SIGN_ID" "${CODESIGN_KEYCHAIN_ARGS[@]}" \
-    "$SPARKLE_B/XPCServices/Downloader.xpc"
-codesign --force --options runtime --sign "$SIGN_ID" "${CODESIGN_KEYCHAIN_ARGS[@]}" \
-    "$SPARKLE_B/Autoupdate"
-codesign --force --options runtime --sign "$SIGN_ID" "${CODESIGN_KEYCHAIN_ARGS[@]}" \
-    "$SPARKLE_B/Updater.app"
-codesign --force --options runtime --sign "$SIGN_ID" "${CODESIGN_KEYCHAIN_ARGS[@]}" \
-    "${APP_BUNDLE}/Contents/Frameworks/Sparkle.framework"
-
-if ! codesign --force --entitlements "SiriRemoteVibe.entitlements" \
-    --sign "$SIGN_ID" "${CODESIGN_KEYCHAIN_ARGS[@]}" "${APP_BUNDLE}"; then
-    echo "Error: app signing failed. The existing installed App was not touched."
-    exit 1
-fi
-codesign --verify --deep --strict --verbose=2 "${APP_BUNDLE}"
-codesign -dvv "${APP_BUNDLE}" 2>&1 | grep -E "(Authority|flags|Identifier)" || true
+# The shared signer honors this Mac's stable-signing opt-in and explicit overrides.
+./sign_app_bundle.sh "${APP_BUNDLE}"
 
 echo ""
 echo "✓ App bundle created: $APP_BUNDLE"

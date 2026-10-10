@@ -23,19 +23,19 @@ checksum-pinned libopus 1.6.1 source, compiles it for macOS 13, and links it sta
 shipping router. Neither the build Mac nor the destination Mac needs Homebrew.
 
 ```sh
-dist/build-release.sh 1.0.1
+dist/build-release.sh 1.0.2
 ```
 
 The command requires a clean worktree, rebuilds every shipping binary, injects the numeric app
-version and a monotonic internal build number, uses reproducible ad-hoc signing in an isolated
-staging bundle, runs the router and HAL
+version and a monotonic internal build number, honors the build Mac's stable-signing preference in an isolated
+staging bundle (or uses ad-hoc signing on Macs without that preference), runs the router and HAL
 offline tests, and writes:
 
 ```text
-dist/build/1.0.1/
-├── SiriRemoteVibe-1.0.1-macOS-arm64.zip
-├── SiriRemoteVibe-Full-Setup-1.0.1-arm64.zip
-├── SiriRemoteVibe-Full-Setup-1.0.1-arm64.pkg
+dist/build/1.0.2/
+├── SiriRemoteVibe-1.0.2-macOS-arm64.zip
+├── SiriRemoteVibe-Full-Setup-1.0.2-arm64.zip
+├── SiriRemoteVibe-Full-Setup-1.0.2-arm64.pkg
 └── SHA256SUMS.txt
 ```
 
@@ -102,7 +102,10 @@ Personal output prints a warning and must never be uploaded to GitHub.
 
 ## Signing and Gatekeeper
 
-These release app bundles are ad-hoc signed, not Apple-notarized. The hardened runtime is intentionally
+Release 1.0.2 uses a persistent self-signed certificate; 1.0.1 used ad-hoc signing. Neither is
+Apple-notarized. The shared App signer reads `~/.config/siriremote/build-signing-mode`; explicit
+`HYPERVIBE_SIGN_MODE` overrides it. Stable signing reuses the existing local certificate and fails
+when it is unavailable. See [local signing](../docs/local-signing.md). The hardened runtime is intentionally
 disabled because it terminates the private MultitouchSupport callback used by the remote trackpad.
 An ad-hoc identifier is not a trustworthy Keychain peer identity, so ad-hoc releases do not invoke the
 certificate-bound credential helper. Native cloud dictation remains available by storing keys in a
