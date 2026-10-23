@@ -1087,13 +1087,7 @@ private struct ActionSlotEditor: View {
 
     private func commitOnPressShortcut(_ shortcut: String) {
         onPressText = shortcut
-        guard !text.isEmpty else { return }
-        onChange(.pushToTalk(
-            keys: text,
-            onPress: shortcut.isEmpty ? nil : shortcut,
-            onRelease: releaseText.isEmpty ? nil : releaseText,
-            switchToApp: switchToApp.isEmpty ? nil : switchToApp
-        ))
+        onChange(pushToTalkAction())
     }
 
     private func updateMacroKeys(_ id: UUID, _ shortcut: String) {
@@ -1131,13 +1125,20 @@ private struct ActionSlotEditor: View {
 
     private func commitReleaseShortcut(_ shortcut: String) {
         releaseText = shortcut
-        guard !text.isEmpty else { return }
-        onChange(.pushToTalk(
+        onChange(pushToTalkAction())
+    }
+
+    /// Keep an incomplete Push-to-Talk action while it is being configured. The four fields are
+    /// independent: users may choose the target app or On press before recording the held key.
+    /// An empty `keys` value is inert at runtime but preserves the editor state until the user
+    /// fills the Hold field.
+    private func pushToTalkAction() -> Action {
+        .pushToTalk(
             keys: text,
             onPress: onPressText.isEmpty ? nil : onPressText,
-            onRelease: shortcut.isEmpty ? nil : shortcut,
+            onRelease: releaseText.isEmpty ? nil : releaseText,
             switchToApp: switchToApp.isEmpty ? nil : switchToApp
-        ))
+        )
     }
 
     private func build() -> Action? {
@@ -1151,12 +1152,7 @@ private struct ActionSlotEditor: View {
                 .map { MacroStep(keys: $0.keys, delay: max(0, Double($0.delayText) ?? 0.1)) }
             return steps.isEmpty ? nil : .macro(steps: steps)
         case .pushToTalk:
-            return text.isEmpty ? nil : .pushToTalk(
-                keys: text,
-                onPress: onPressText.isEmpty ? nil : onPressText,
-                onRelease: releaseText.isEmpty ? nil : releaseText,
-                switchToApp: switchToApp.isEmpty ? nil : switchToApp
-            )
+            return pushToTalkAction()
         case .repeatKey:   return text.isEmpty ? nil : .repeatKey(keys: text, delay: repDelay, interval: repInterval)
         case .media:       return .media(key: pick.isEmpty ? "playpause" : pick)
         case .mouse:       return .mouse(op: pick.isEmpty ? "click" : pick)

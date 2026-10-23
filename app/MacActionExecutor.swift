@@ -87,16 +87,27 @@ final class MacActionExecutor: ActionExecutor {
 
 enum Keys {
     private static func post(_ event: CGEvent?) {
+        post(event, to: nil)
+    }
+
+    /// Post directly to the selected target application when Push-to-Talk has a Switch to App
+    /// target. This avoids another running app's global hotkey (for example Claude) consuming the
+    /// On Press shortcut after the target was activated.
+    private static func post(_ event: CGEvent?, to targetPID: pid_t?) {
         guard let event = event else { return }
         HeldShortcutModifiers.shared.prepareSynthetic(event)
-        event.post(tap: .cghidEventTap)
+        if let targetPID {
+            event.postToPid(targetPID)
+        } else {
+            event.post(tap: .cghidEventTap)
+        }
     }
 
     /// One reused event source for the ~66/s hold-repeat ticks — allocating a fresh `CGEventSource`
     /// every tick is avoidable churn on a cadence meant to match the keyboard. Used by `holdRepeat`.
     private static let sharedSource = CGEventSource(stateID: .combinedSessionState)
 
-    static func synthesize(_ combo: String) {
+    static func synthesize(_ combo: String, to targetPID: pid_t? = nil) {
         guard let parsed = KeyMap.parse(combo) else {
             NSLog("[siriRemote] unknown keystroke '\(combo)'"); return
         }
@@ -109,7 +120,7 @@ enum Keys {
             f.insert(m.flag)
             let e = CGEvent(keyboardEventSource: src, virtualKey: m.keyCode, keyDown: true)
             e?.flags = f
-            post(e)
+            post(e, to: targetPID)
         }
 
         if let mainKey = parsed.mainKey {
@@ -117,8 +128,8 @@ enum Keys {
             down?.flags = f
             let up = CGEvent(keyboardEventSource: src, virtualKey: mainKey, keyDown: false)
             up?.flags = f
-            post(down)
-            post(up)
+            post(down, to: targetPID)
+            post(up, to: targetPID)
         } else {
             // Modifier-only chord (e.g. "rctrl+rcmd+ropt"): hold briefly so a hyperkey tool sees it.
             usleep(30000)
@@ -129,7 +140,7 @@ enum Keys {
             f.remove(m.flag)
             let e = CGEvent(keyboardEventSource: src, virtualKey: m.keyCode, keyDown: false)
             e?.flags = f
-            post(e)
+            post(e, to: targetPID)
         }
     }
 
@@ -166,7 +177,7 @@ enum Keys {
     /// Press a combo DOWN and leave it held — modifiers and the main key stay down. Returns the
     /// parsed combo so the caller drives `holdRepeat`/`holdEnd` without re-parsing. Pair EVERY
     /// `holdBegin` with exactly one `holdEnd`, or the key sticks down.
-    static func holdBegin(_ combo: String) -> KeyMap.Combo? {
+    static func holdBegin(_ combo: String, to targetPID: pid_t? = nil) -> KeyMap.Combo? {
         guard let parsed = KeyMap.parse(combo) else {
             NSLog("[siriRemote] unknown keystroke '\(combo)'"); return nil
         }
@@ -177,12 +188,12 @@ enum Keys {
             f.insert(m.flag)
             let e = CGEvent(keyboardEventSource: src, virtualKey: m.keyCode, keyDown: true)
             e?.flags = f
-            post(e)
+            post(e, to: targetPID)
         }
         if let mainKey = parsed.mainKey {
             let down = CGEvent(keyboardEventSource: src, virtualKey: mainKey, keyDown: true)
             down?.flags = f
-            post(down)
+            post(down, to: targetPID)
         }
         return parsed
     }
@@ -200,20 +211,20 @@ enum Keys {
 
     /// Release a held combo: main key up, then modifiers up in reverse order. This is the ONLY thing
     /// that lifts a held key, so it must run on every teardown path.
-    static func holdEnd(_ parsed: KeyMap.Combo) {
+    static func holdEnd(_ parsed: KeyMap.Combo, to targetPID: pid_t? = nil) {
         HeldShortcutModifiers.shared.end(parsed.mods)
         let src = CGEventSource(stateID: .combinedSessionState)
         var f = parsed.flags
         if let mainKey = parsed.mainKey {
             let up = CGEvent(keyboardEventSource: src, virtualKey: mainKey, keyDown: false)
             up?.flags = f
-            post(up)
+            post(up, to: targetPID)
         }
         for m in parsed.mods.reversed() {
             f.remove(m.flag)
             let e = CGEvent(keyboardEventSource: src, virtualKey: m.keyCode, keyDown: false)
             e?.flags = f
-            post(e)
+            post(e, to: targetPID)
         }
     }
 }

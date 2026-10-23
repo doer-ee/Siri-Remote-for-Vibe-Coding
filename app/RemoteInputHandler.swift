@@ -1124,6 +1124,9 @@ class RemoteInputHandler {
         }
         // Release AFTER the opener fired → release the held hotkey (dictation off).
         if !pressed, let held = pushToTalkOpen.removeValue(forKey: buttonName) {
+            // Hold shortcuts must go through the system event stream. Apps such as ChatGPT
+            // register voice hotkeys globally; posting directly to the app PID would insert
+            // Option+R as text (®) instead of invoking its dictation listener.
             Keys.holdEnd(held.combo)
             if let releaseKeys = held.onRelease, !releaseKeys.isEmpty {
                 Keys.synthesize(releaseKeys)
@@ -1237,12 +1240,20 @@ class RemoteInputHandler {
                         self.onNativeDictationMisconfigured?()
                     }
                 } else {
+                    let targetPID: pid_t?
                     if let target = configuredPushToTalk?.switchToApp {
-                        Self.activateConfiguredApp(target)
+                        // A configured target must be resolved before emitting any shortcut. Never
+                        // fall back to global delivery when it exits or cannot be activated.
+                        guard let app = Self.activateConfiguredApp(target) else { return }
+                        targetPID = app.processIdentifier
+                    } else {
+                        targetPID = nil
                     }
                     if let pressKeys = configuredPushToTalk?.onPress, !pressKeys.isEmpty {
-                        Keys.synthesize(pressKeys)
+                        Keys.synthesize(pressKeys, to: targetPID)
                     }
+                    // On press is app-specific, but the held voice shortcut must remain global so
+                    // ChatGPT's voice hotkey listener can receive it.
                     if let combo = Keys.holdBegin(keys) {
                         self.pushToTalkOpen[buttonName] = OpenPushToTalk(
                             combo: combo,
@@ -1982,9 +1993,10 @@ class RemoteInputHandler {
     /// Activate a running application selected in the Layout editor. Config stores the bundle
     /// identifier, which is stable across localized display names; accepting a display name here
     /// keeps hand-written configs from older builds useful as well.
-    static func activateConfiguredApp(_ identifierOrName: String) {
+    @discardableResult
+    static func activateConfiguredApp(_ identifierOrName: String) -> NSRunningApplication? {
         let query = identifierOrName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return }
+        guard !query.isEmpty else { return nil }
         let running = NSWorkspace.shared.runningApplications
         let match = running.first { $0.bundleIdentifier == query }
             ?? running.first {
@@ -1992,9 +2004,15 @@ class RemoteInputHandler {
             }
         guard let app = match else {
             NSLog("[siriRemote] configured app is not running: %@", query)
-            return
+            return nil
         }
-        app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+        guard app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps]) else {
+            NSLog("[siriRemote] unable to activate configured app: %@", query)
+            return nil
+        }
+        NSLog("[siriRemote] activated PTT target %@ pid=%d; sending shortcuts to target only",
+              app.bundleIdentifier ?? query, app.processIdentifier)
+        return app
     }
 
     /// Enabling App-native dictation claims only the physical Siri/side button. This deliberately
