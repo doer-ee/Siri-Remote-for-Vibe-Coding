@@ -191,11 +191,12 @@ permissions and Start at Login refer to the installed bundle. `--settings` opens
 `/Applications/HyperVibe.app` before launching the renamed app; keep only one UI instance running.
 Your existing configuration and Voice data are preserved.
 
-The app is available from both the **Dock** and the Siri Remote icon in the menu bar.
-Settings and System Check stay open behind other apps and can be minimized. Click the Dock icon
-to bring them back, or use the **Window** menu to select one. Closing either window keeps the
-remote controller running; choose **Quit** to stop it. Reopening the app with no windows open
-shows Settings, centered on the display containing the pointer.
+The app appears in the **Dock** while Settings or System Check is open, and remains available
+through the Siri Remote icon in the menu bar. The windows stay open behind other apps and can be
+minimized. Click the Dock icon to bring them back, or use the **Window** menu to select one.
+When both windows are closed, the Dock icon hides while the remote controller keeps running;
+choose **Quit** to stop it. Reopening the app with no windows open shows Settings, centered on the
+display containing the pointer.
 
 ### Permissions
 

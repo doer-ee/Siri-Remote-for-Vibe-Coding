@@ -69,6 +69,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var permissionHealthTimer: Timer?
     private var permissionActivationObserver: NSObjectProtocol?
     private var openSystemCheckObserver: NSObjectProtocol?
+    private var windowLifecycleObservers: [NSObjectProtocol] = []
     private var previousAccessibilityGranted: Bool?
     private var previousInputMonitoringGranted: Bool?
     /// Debounces persisting Tuning-tab slider changes back into config.jsonc.
@@ -1220,6 +1221,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Closing either window leaves the remote controller running.
         NSApp.setActivationPolicy(.regular)
         configureApplicationMenu()
+        observeWindowLifecycle()
         
         // Create menu bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -2002,6 +2004,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                          keyEquivalent: "")
         NSApp.mainMenu = main
         NSApp.windowsMenu = windows
+    }
+
+    private func observeWindowLifecycle() {
+        let names: [Notification.Name] = [
+            NSWindow.willCloseNotification,
+            NSWindow.didMiniaturizeNotification,
+            NSWindow.didDeminiaturizeNotification,
+            NSWindow.didBecomeKeyNotification
+        ]
+        windowLifecycleObservers = names.map { name in
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) {
+                [weak self] _ in self?.refreshWindowActivationPolicy()
+            }
+        }
+    }
+
+    /// Show a Dock icon only while Settings or System Check has a window to return to. The
+    /// controller itself remains a menu-bar app when both windows are closed.
+    private func refreshWindowActivationPolicy() {
+        DispatchQueue.main.async {
+            let hasWindow = NSApp.windows.contains { window in
+                let isAppWindow = window.title == AppBrand.name + " Settings"
+                    || window.title == L("System Check")
+                return isAppWindow && (window.isVisible || window.isMiniaturized)
+            }
+            let desired: NSApplication.ActivationPolicy = hasWindow ? .regular : .accessory
+            if NSApp.activationPolicy() != desired {
+                NSApp.setActivationPolicy(desired)
+            }
+        }
     }
 
     @objc private func openSettingsWindow() { settingsWindow?.show() }
