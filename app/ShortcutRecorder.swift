@@ -188,6 +188,16 @@ private final class ShortcutRecorderButton: NSButton {
         return result
     }
 
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        // A regular application's Edit/Window menus otherwise consume Command+C/W/M before
+        // keyDown reaches the recorder. Recording owns these keys only while first responder.
+        guard isRecording, window?.firstResponder === self else {
+            return super.performKeyEquivalent(with: event)
+        }
+        keyDown(with: event)
+        return true
+    }
+
     override func keyDown(with event: NSEvent) {
         guard isRecording else { super.keyDown(with: event); return }
         guard !event.isARepeat else { return }
@@ -300,6 +310,17 @@ enum ShortcutRecorderSelfTest {
         button.flagsChanged(with: event(.flagsChanged, [.command, .shift], 56))
         button.keyDown(with: event(.keyDown, [.command, .shift], 17, characters: "t"))
         expect(commits.last == "cmd+shift+t", "main chord", into: &failures)
+
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 240, height: 80),
+                              styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.contentView?.addSubview(button)
+        button.beginRecordingForTesting()
+        window.makeFirstResponder(button)
+        let consumed = button.performKeyEquivalent(with: event(.keyDown, [.command], 13, characters: "w"))
+        expect(consumed && commits.last == "cmd+w", "record Command+W instead of closing window", into: &failures)
+        button.removeFromSuperview()
+        window.close()
 
         button.beginRecordingForTesting()
         button.flagsChanged(with: event(.flagsChanged, [.function], 63))

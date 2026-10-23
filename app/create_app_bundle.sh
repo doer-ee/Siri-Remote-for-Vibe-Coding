@@ -130,7 +130,7 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" <<EOF
 	<key>LSMultipleInstancesProhibited</key>
 	<true/>
 	<key>LSUIElement</key>
-	<true/>
+	<false/>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>

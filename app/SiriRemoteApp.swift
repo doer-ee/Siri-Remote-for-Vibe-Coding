@@ -1216,8 +1216,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // directly, which launches Music.app. Suspend rcd for this session; restored on exit.
         RCDControl.suspend()
 
-        // Run as menu bar app (no dock icon)
-        NSApp.setActivationPolicy(.accessory)
+        // Keep a Dock / Command-Tab presence so Settings and System Check are ordinary windows.
+        // Closing either window leaves the remote controller running.
+        NSApp.setActivationPolicy(.regular)
+        configureApplicationMenu()
         
         // Create menu bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -1957,11 +1959,68 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         false
     }
 
+    private func configureApplicationMenu() {
+        let main = NSMenu()
+        let appItem = NSMenuItem()
+        let appMenu = NSMenu(title: AppBrand.shortName)
+        appItem.submenu = appMenu
+        main.addItem(appItem)
+        let settings = NSMenuItem(title: L("Settings…"),
+                                  action: #selector(openSettingsWindow), keyEquivalent: ",")
+        settings.target = self
+        appMenu.addItem(settings)
+        let check = NSMenuItem(title: L("Open System Check…"),
+                               action: #selector(openSystemCheckWindow), keyEquivalent: "")
+        check.target = self
+        appMenu.addItem(check)
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: "Hide " + AppBrand.shortName,
+                        action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        appMenu.addItem(withTitle: L("Quit") + " " + AppBrand.shortName,
+                        action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+
+        // Standard responder-chain editing also keeps manual shortcut entry familiar.
+        let editItem = NSMenuItem()
+        let edit = NSMenu(title: "Edit")
+        editItem.submenu = edit
+        main.addItem(editItem)
+        for (title, action, key) in [("Undo", "undo:", "z"), ("Cut", "cut:", "x"),
+                                     ("Copy", "copy:", "c"), ("Paste", "paste:", "v"),
+                                     ("Select All", "selectAll:", "a")] {
+            edit.addItem(withTitle: title, action: NSSelectorFromString(action), keyEquivalent: key)
+        }
+
+        let windowItem = NSMenuItem()
+        let windows = NSMenu(title: "Window")
+        windowItem.submenu = windows
+        main.addItem(windowItem)
+        windows.addItem(withTitle: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)),
+                         keyEquivalent: "m")
+        windows.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        windows.addItem(.separator())
+        windows.addItem(withTitle: "Bring All to Front", action: #selector(NSApplication.arrangeInFront(_:)),
+                         keyEquivalent: "")
+        NSApp.mainMenu = main
+        NSApp.windowsMenu = windows
+    }
+
+    @objc private func openSettingsWindow() { settingsWindow?.show() }
+    @objc private func openSystemCheckWindow() { showSetupWizard() }
+
     /// Re-opening the app (double-clicking Siri Remote for Vibe Coding.app while it's already running, or clicking it
     /// in the Dock) opens the Settings window. This is the reliable way to reach the UI when the
     /// menu-bar icon is hidden — e.g. squeezed behind the notch on a crowded menu bar.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        settingsWindow?.show()
+        if flag {
+            sender.arrangeInFront(nil)
+        } else if let minimized = sender.windows.first(where: {
+            $0.isMiniaturized && !$0.isExcludedFromWindowsMenu
+        }) {
+            minimized.deminiaturize(nil)
+            minimized.makeKeyAndOrderFront(nil)
+        } else {
+            settingsWindow?.show()
+        }
         return true
     }
     

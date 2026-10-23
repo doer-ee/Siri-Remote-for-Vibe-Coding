@@ -191,9 +191,11 @@ permissions and Start at Login refer to the installed bundle. `--settings` opens
 `/Applications/HyperVibe.app` before launching the renamed app; keep only one UI instance running.
 Your existing configuration and Voice data are preserved.
 
-**It's a menu-bar app** (no Dock icon): after launching, click the walkie-talkie icon in the menu bar
-for **Settings… / Quit**. If the menu-bar icon is hidden (e.g. behind the notch), just **double-click
-`Siri Remote for Vibe Coding.app` again** — that reopens the Settings window.
+The app is available from both the **Dock** and the Siri Remote icon in the menu bar.
+Settings and System Check stay open behind other apps and can be minimized. Click the Dock icon
+to bring them back, or use the **Window** menu to select one. Closing either window keeps the
+remote controller running; choose **Quit** to stop it. Reopening the app with no windows open
+shows Settings, centered on the display containing the pointer.
 
 ### Permissions
 

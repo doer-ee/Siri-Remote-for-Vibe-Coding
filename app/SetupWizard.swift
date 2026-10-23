@@ -61,13 +61,15 @@ final class SetupWizardController {
             hosting.sizingOptions = []
             hosting.view.frame = NSRect(x: 0, y: 0, width: 760, height: 680)
             let win = NSWindow(contentViewController: hosting)
-            win.styleMask = [.titled, .closable, .fullSizeContentView]
+            win.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
             win.titlebarAppearsTransparent = true
             win.titleVisibility = .hidden
             win.isMovableByWindowBackground = true
             win.isReleasedWhenClosed = false
+            win.hidesOnDeactivate = false
+            win.level = .normal
+            win.isExcludedFromWindowsMenu = false
             win.title = L("System Check")
-            win.standardWindowButton(.miniaturizeButton)?.isHidden = true
             win.standardWindowButton(.zoomButton)?.isHidden = true
             win.setContentSize(NSSize(width: 760, height: 680))
             win.minSize = NSSize(width: 700, height: 620)
@@ -76,6 +78,7 @@ final class SetupWizardController {
             window = win
         }
         NSApp.activate(ignoringOtherApps: true)
+        if window?.isMiniaturized == true { window?.deminiaturize(nil) }
         window?.makeKeyAndOrderFront(nil)
     }
 
