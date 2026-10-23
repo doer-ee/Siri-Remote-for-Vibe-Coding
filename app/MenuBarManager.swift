@@ -2,7 +2,7 @@
 //  MenuBarManager.swift
 //  siriRemote
 //
-//  The menu-bar status item: a drawn walkie-talkie icon, a connection-status line, and
+//  The menu-bar status item: a Siri Remote icon, a connection-status line, and
 //  Settings… / Quit. All button / ring / gesture mapping lives in Settings → Layout, driven by
 //  the config engine — there are no mapping submenus here.
 //
@@ -74,40 +74,30 @@ final class MenuBarManager {
 
     // MARK: - Icon
 
-    /// Procedurally draw the menu-bar icon — a walkie-talkie glyph (antenna + body with a display
-    /// slot and a speaker hole, punched via even-odd fill). Template image, so it tints correctly.
-    private static func makeWaveIcon(updateAvailable: Bool = false) -> NSImage {
+    /// Use the same Siri Remote symbol as Settings, with a separate update indicator.
+    /// The template image follows the menu bar's light, dark and selected appearances.
+    private static func makeRemoteIcon(updateAvailable: Bool = false) -> NSImage {
         let pt: CGFloat = 18
+        let remote = NSImage(systemSymbolName: "appletvremote.gen4.fill",
+                             accessibilityDescription: AppBrand.name)?
+            .withSymbolConfiguration(.init(pointSize: pt, weight: .regular))
         let image = NSImage(size: NSSize(width: pt, height: pt), flipped: true) { rect in
             guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
-            let s = rect.width
-
-            ctx.translateBy(x: s / 2, y: s / 2)
-            ctx.scaleBy(x: 2, y: 2)
-            ctx.translateBy(x: -s / 2, y: -s / 2)
-
-            ctx.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 1))
-
-            let antenna = CGRect(x: 0.5260 * s, y: 0.1944 * s, width: 0.0638 * s, height: 0.1594 * s)
-            let body    = CGRect(x: 0.3348 * s, y: 0.3538 * s, width: 0.3187 * s, height: 0.4462 * s)
-            let display = CGRect(x: 0.3986 * s, y: 0.6406 * s, width: 0.1911 * s, height: 0.0956 * s)
-            let speakerR: CGFloat = 0.0956 * s
-            let speaker = CGRect(x: 0.4942 * s - speakerR, y: 0.5131 * s - speakerR,
-                                 width: 2 * speakerR, height: 2 * speakerR)
-
-            let path = CGMutablePath()
-            path.addPath(CGPath(roundedRect: antenna, cornerWidth: 0.0278 * s, cornerHeight: 0.0278 * s, transform: nil))
-            path.addPath(CGPath(roundedRect: body,    cornerWidth: 0.0556 * s, cornerHeight: 0.0556 * s, transform: nil))
-            path.addPath(CGPath(roundedRect: display, cornerWidth: 0.0278 * s, cornerHeight: 0.0278 * s, transform: nil))
-            path.addEllipse(in: speaker)
-
-            ctx.addPath(path)
-            ctx.fillPath(using: .evenOdd)
+            if let remote, remote.size.width > 0, remote.size.height > 0 {
+                let scale = min(rect.width / remote.size.width, rect.height / remote.size.height)
+                let size = NSSize(width: remote.size.width * scale, height: remote.size.height * scale)
+                remote.draw(in: NSRect(x: rect.midX - size.width / 2,
+                                       y: rect.midY - size.height / 2,
+                                       width: size.width, height: size.height),
+                            from: .zero, operation: .sourceOver, fraction: 1,
+                            respectFlipped: true, hints: nil)
+            }
             if updateAvailable {
                 // A compact status dot remains legible in both menu-bar appearances because the
                 // whole image is a template. It does not resize or shift the familiar remote mark.
-                ctx.fillEllipse(in: CGRect(x: 0.72 * s, y: 0.08 * s,
-                                           width: 0.18 * s, height: 0.18 * s))
+                ctx.setFillColor(NSColor.black.cgColor)
+                ctx.fillEllipse(in: CGRect(x: rect.maxX - 3.5, y: rect.minY + 1,
+                                           width: 3, height: 3))
             }
             return true
         }
@@ -119,7 +109,7 @@ final class MenuBarManager {
 
     private func setupMenuBar() {
         guard let button = statusItem.button else { return }
-        button.image = Self.makeWaveIcon()
+        button.image = Self.makeRemoteIcon()
         button.title = ""
         button.toolTip = AppBrand.name
         rebuildMenu()
@@ -207,7 +197,7 @@ final class MenuBarManager {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.availableUpdateVersion = version
-            self.statusItem.button?.image = Self.makeWaveIcon(updateAvailable: version != nil)
+            self.statusItem.button?.image = Self.makeRemoteIcon(updateAvailable: version != nil)
             self.statusItem.button?.toolTip = version.map { AppBrand.shortName + " · " + L("Update %@ Available", $0) } ?? AppBrand.name
             self.rebuildMenu()
         }
