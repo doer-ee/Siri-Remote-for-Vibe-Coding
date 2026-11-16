@@ -16,6 +16,7 @@ SWIFT_FILES=(
     "UpdateManager.swift"
     "RemoteDetector.swift"
     "RemoteInputHandler.swift"
+    "PushToTalkAppActivation.swift"
     "GATTDiagnostics.swift"
     "NativePushToTalk.swift"
     "BuiltinMicFeeder.swift"

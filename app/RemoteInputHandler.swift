@@ -321,6 +321,9 @@ class RemoteInputHandler {
     /// an app switch, a config hot-reload). The optional release shortcut is fired only after the
     /// held combo is released on a normal physical button release, never on disconnect teardown.
     private var pushToTalkOpen: [String: OpenPushToTalk] = [:]
+    // Keep activation separate from generic quick-tap timing. A release during an app switch
+    // cancels the opener, without generating a delayed tap or sending a key to the wrong app.
+    private var pushToTalkActivations: [String: PushToTalkAppActivation] = [:]
     /// Push-to-talk presses whose ACTIVATION delay has not yet elapsed: buttonName → the scheduled
     /// opener. A too-quick tap (released before `pushToTalkActivationDelay`) cancels this and fires
     /// nothing, so a brush of the button can't toggle dictation on; holding past the delay fires the
@@ -1036,6 +1039,11 @@ class RemoteInputHandler {
         //    stamped in `handleInputValue` before any dispatch (the same contract every other
         //    early-return here relies on), and a push-to-talk press arms nothing — no stage
         //    timers, no pending tap, no repeat — so its release has nothing else to unwind.
+        if !pressed, let activation = pushToTalkActivations.removeValue(forKey: buttonName) {
+            activation.cancel()
+            rmDebug("🎙 PTT app switch cancelled on release: \(buttonName)")
+            return
+        }
         // Release BEFORE the activation delay elapsed → cancel the pending opener. The Voice hold
         // stays closed; an explicit quick-tap binding (or the pre-existing base binding temporarily
         // claimed by native dictation) is then allowed through the tap/double disambiguator.
@@ -1240,32 +1248,38 @@ class RemoteInputHandler {
                         self.onNativeDictationMisconfigured?()
                     }
                 } else {
-                    let targetPID: pid_t?
-                    if let target = configuredPushToTalk?.switchToApp {
-                        // A configured target must be resolved before emitting any shortcut. Never
-                        // fall back to global delivery when it exits or cannot be activated.
-                        guard let app = Self.activateConfiguredApp(target) else { return }
-                        targetPID = app.processIdentifier
+                    guard KeyMap.parse(keys) != nil else {
+                        rmDebug("🎙 PTT ignored: held shortcut is empty/invalid")
+                        return
+                    }
+                    let begin: (pid_t?) -> Void = { [weak self] targetPID in
+                        guard let self else { return }
+                        if let pressKeys = configuredPushToTalk?.onPress, !pressKeys.isEmpty {
+                            Keys.synthesize(pressKeys, to: targetPID)
+                        }
+                        // The voice hotkey must remain global (ChatGPT listens before PID delivery).
+                        if let combo = Keys.holdBegin(keys) {
+                            self.pushToTalkOpen[buttonName] = OpenPushToTalk(
+                                combo: combo, onRelease: configuredPushToTalk?.onRelease)
+                            self.onContinuousActionBegan?(handled)
+                            rmDebug("🎙 PTT opened: targetPID=\(targetPID.map(String.init) ?? "current") front=\(NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "unknown")")
+                        }
+                    }
+                    if let target = configuredPushToTalk?.switchToApp, !target.isEmpty {
+                        let activation = PushToTalkAppActivation()
+                        self.pushToTalkActivations[buttonName]?.cancel()
+                        self.pushToTalkActivations[buttonName] = activation
+                        activation.start(target: target) { [weak self, weak activation] app in
+                            guard let self, let activation,
+                                  self.pushToTalkActivations[buttonName] === activation else { return }
+                            self.pushToTalkActivations.removeValue(forKey: buttonName)
+                            guard let app else { return }
+                            begin(app.processIdentifier)
+                        }
                     } else {
-                        targetPID = nil
-                    }
-                    if let pressKeys = configuredPushToTalk?.onPress, !pressKeys.isEmpty {
-                        Keys.synthesize(pressKeys, to: targetPID)
-                    }
-                    // On press is app-specific, but the held voice shortcut must remain global so
-                    // ChatGPT's voice hotkey listener can receive it.
-                    if let combo = Keys.holdBegin(keys) {
-                        self.pushToTalkOpen[buttonName] = OpenPushToTalk(
-                            combo: combo,
-                            onRelease: configuredPushToTalk?.onRelease
-                        )
+                        begin(nil)
                     }
                 }
-                // This raw-edge fast path deliberately bypasses Controller.handle. It announces a
-                // continuous action only once the opener genuinely fires, then keeps it alive until
-                // the matching release callback above. A base push-to-talk quick tap still follows
-                // the existing tap/double fallback; Siri's immediate Hold mapping consumes it.
-                if !usesNativeRoute { self.onContinuousActionBegan?(handled) }
                 let route = useNative ? "native dictation"
                     : (suppressExternalForBusyNative ? "native dictation busy (consumed)"
                        : "pushToTalk '\(keys)'")
@@ -2198,6 +2212,7 @@ class RemoteInputHandler {
         // A not-yet-fired opener (button torn down during the activation delay): cancel it — nothing
         // was sent, so there is nothing to close.
         pushToTalkPending.removeValue(forKey: buttonName)?.cancel()
+        pushToTalkActivations.removeValue(forKey: buttonName)?.cancel()
         if nativePushToTalkPending.remove(buttonName) != nil {
             onNativeDictationCancelled?()
         }
